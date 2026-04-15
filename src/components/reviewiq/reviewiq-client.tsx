@@ -716,11 +716,7 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
   const completedGapKeySignature = completedGapEntries.map(({ gap }) => gap.attributeKey).join(":");
   const activeInlinePrompt =
     selectedProperty?.candidateGaps.find((gap) => gap.attributeKey === activeInlinePromptKey) ?? null;
-  const visibleInlinePrompt =
-    activeInlinePrompt ??
-    (reviewWordCount >= 8 && inlinePromptKeys.length < INLINE_PROMPT_LIMIT
-      ? completedGapEntries.find(({ gap }) => !inlinePromptKeys.includes(gap.attributeKey))?.gap ?? null
-      : null);
+  const visibleInlinePrompt = activeInlinePrompt;
   const nudge = describeNudge(
     reviewText,
     coverageScore,
@@ -1332,42 +1328,27 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
       return;
     }
 
-    if (reviewWordCount < 8) {
-      if (activeInlinePromptKey) {
-        setActiveInlinePromptKey(null);
-      }
-      return;
+    const unresolvedKeys = new Set(completedGapEntries.map(({ gap }) => gap.attributeKey));
+    const resolvedPromptKeys = inlinePromptKeys.filter((key) => !unresolvedKeys.has(key));
+    const activePromptIsCovered = activeInlinePromptKey ? !unresolvedKeys.has(activeInlinePromptKey) : false;
+    const nextResolvedPromptKeys =
+      activePromptIsCovered && activeInlinePromptKey && !resolvedPromptKeys.includes(activeInlinePromptKey)
+        ? [...resolvedPromptKeys, activeInlinePromptKey]
+        : resolvedPromptKeys;
+
+    if (nextResolvedPromptKeys.length !== inlinePromptKeys.length) {
+      setInlinePromptKeys(nextResolvedPromptKeys);
     }
 
-    const activePromptStillNeedsCoverage = activeInlinePromptKey
-      ? completedGapEntries.some(({ gap }) => gap.attributeKey === activeInlinePromptKey)
-      : false;
+    const nextGap =
+      nextResolvedPromptKeys.length >= INLINE_PROMPT_LIMIT
+        ? null
+        : completedGapEntries.find(({ gap }) => !nextResolvedPromptKeys.includes(gap.attributeKey))?.gap ?? null;
+    const nextPromptKey = reviewWordCount >= 8 ? nextGap?.attributeKey ?? null : activeInlinePromptKey;
 
-    if (activePromptStillNeedsCoverage) {
-      return;
+    if (activeInlinePromptKey !== nextPromptKey) {
+      setActiveInlinePromptKey(nextPromptKey);
     }
-
-    if (inlinePromptKeys.length >= INLINE_PROMPT_LIMIT || !completedGapEntries.length) {
-      if (activeInlinePromptKey) {
-        setActiveInlinePromptKey(null);
-      }
-      return;
-    }
-
-    const nextGap = completedGapEntries.find(({ gap }) => !inlinePromptKeys.includes(gap.attributeKey))?.gap ?? null;
-    if (!nextGap) {
-      if (activeInlinePromptKey) {
-        setActiveInlinePromptKey(null);
-      }
-      return;
-    }
-
-    if (activeInlinePromptKey === nextGap.attributeKey) {
-      return;
-    }
-
-    setActiveInlinePromptKey(nextGap.attributeKey);
-    setInlinePromptKeys((current) => (current.includes(nextGap.attributeKey) ? current : [...current, nextGap.attributeKey]));
   }, [
     activeInlinePromptKey,
     completedGapKeySignature,
