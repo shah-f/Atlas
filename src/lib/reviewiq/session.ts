@@ -75,6 +75,139 @@ function normalizeAnswer(rawAnswer: string) {
   return rawAnswer.replace(/\s+/g, " ").trim();
 }
 
+function languageSupportsSentenceCase(languageCode: string) {
+  return ["en", "es", "fr", "de", "it", "pt", "nl"].includes(languageCode.toLowerCase());
+}
+
+function needsTerminalPunctuation(text: string) {
+  return /[\p{L}\p{N}"')\]]$/u.test(text) && !/[.!?…]["')\]]*$/u.test(text);
+}
+
+function matchReplacementCase(source: string, replacement: string) {
+  if (source === source.toUpperCase()) {
+    return replacement.toUpperCase();
+  }
+
+  if (source[0] === source[0]?.toUpperCase() && source.slice(1) === source.slice(1).toLowerCase()) {
+    return replacement[0]?.toUpperCase() + replacement.slice(1);
+  }
+
+  return replacement;
+}
+
+function applyConservativeEnglishTextFixes(text: string) {
+  const exactWordReplacements: Array<[RegExp, string]> = [
+    [/\bdont\b/gi, "don't"],
+    [/\bcant\b/gi, "can't"],
+    [/\bwont\b/gi, "won't"],
+    [/\bdidnt\b/gi, "didn't"],
+    [/\bdoesnt\b/gi, "doesn't"],
+    [/\bisnt\b/gi, "isn't"],
+    [/\barent\b/gi, "aren't"],
+    [/\bwasnt\b/gi, "wasn't"],
+    [/\bwerent\b/gi, "weren't"],
+    [/\bcouldnt\b/gi, "couldn't"],
+    [/\bwouldnt\b/gi, "wouldn't"],
+    [/\bshouldnt\b/gi, "shouldn't"],
+    [/\byoure\b/gi, "you're"],
+    [/\btheyre\b/gi, "they're"],
+    [/\bthats\b/gi, "that's"],
+    [/\btheres\b/gi, "there's"],
+    [/\bim\b/gi, "I'm"],
+    [/\bive\b/gi, "I've"],
+    [/\bill\b/gi, "I'll"],
+    [/\bidk\b/gi, "I don't know"],
+    [/\bstaf\b/gi, "staff"],
+    [/\bstaffs\b/gi, "staff"],
+    [/\bservce\b/gi, "service"],
+    [/\bservic\b/gi, "service"],
+    [/\bcleanlyness\b/gi, "cleanliness"],
+    [/\bcleaness\b/gi, "cleanliness"],
+    [/\bclen\b/gi, "clean"],
+    [/\bcleen\b/gi, "clean"],
+    [/\bacccomodating\b/gi, "accommodating"],
+    [/\baccomodating\b/gi, "accommodating"],
+    [/\baccomodation\b/gi, "accommodation"],
+    [/\baccomodations\b/gi, "accommodations"],
+    [/\brecieve\b/gi, "receive"],
+    [/\blocaton\b/gi, "location"],
+    [/\blocatoin\b/gi, "location"],
+    [/\bconvinient\b/gi, "convenient"],
+    [/\bconveniant\b/gi, "convenient"],
+    [/\brom\b/gi, "room"],
+    [/\bromm\b/gi, "room"],
+    [/\brooom\b/gi, "room"],
+    [/\bbathrom\b/gi, "bathroom"],
+    [/\bbathroon\b/gi, "bathroom"],
+    [/\bfreindly\b/gi, "friendly"],
+    [/\bfrendly\b/gi, "friendly"],
+    [/\bhelpfull\b/gi, "helpful"],
+    [/\bnoisey\b/gi, "noisy"],
+    [/\bwierd\b/gi, "weird"],
+    [/\brecption\b/gi, "reception"],
+    [/\bresturant\b/gi, "restaurant"],
+    [/\brestaraunt\b/gi, "restaurant"],
+    [/\bexcelent\b/gi, "excellent"],
+    [/\bexellent\b/gi, "excellent"],
+    [/\bgreatful\b/gi, "grateful"],
+    [/\bdefinatly\b/gi, "definitely"],
+    [/\bdefinately\b/gi, "definitely"],
+    [/\bseperate\b/gi, "separate"],
+    [/\bteh\b/gi, "the"],
+    [/\bhte\b/gi, "the"]
+  ];
+
+  let next = text;
+  for (const [pattern, replacement] of exactWordReplacements) {
+    next = next.replace(pattern, (match) => matchReplacementCase(match, replacement));
+  }
+
+  next = next
+    .replace(/\b(Overall|However|Also|Still|Honestly)\s+/g, "$1, ")
+    .replace(/\b(overall|however|also|still|honestly)\s+/g, "$1, ")
+    .replace(/,\s*,+/g, ", ")
+    .replace(/\b(the|a|an)\s+\1\b/gi, "$1");
+
+  return next;
+}
+
+function applyLocalGrammarFixes(reviewText: string, locale: string, languageCode: string) {
+  const trimmed = normalizeAnswer(reviewText);
+  if (!trimmed) {
+    return {
+      polishedText: reviewText,
+      changed: false
+    };
+  }
+
+  let polishedText = trimmed
+    .replace(/\s+([,.;:!?])/g, "$1")
+    .replace(/([,.;:!?])([^\s])/g, "$1 $2")
+    .replace(/([.!?]){2,}/g, "$1")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+
+  if (languageCode.toLowerCase() === "en") {
+    polishedText = applyConservativeEnglishTextFixes(polishedText);
+    polishedText = polishedText.replace(/\bi\b/g, "I");
+  }
+
+  if (languageSupportsSentenceCase(languageCode)) {
+    polishedText = polishedText.replace(/(^|[.!?]\s+)(\p{L})/gu, (_match, prefix: string, letter: string) => {
+      return `${prefix}${letter.toLocaleUpperCase(locale)}`;
+    });
+  }
+
+  if (needsTerminalPunctuation(polishedText) && polishedText.split(/\s+/).length >= 3) {
+    polishedText = `${polishedText}.`;
+  }
+
+  return {
+    polishedText,
+    changed: polishedText !== trimmed
+  };
+}
+
 function buildAnswerPreview(question: SessionQuestion, rawAnswer: string): AnswerPreview {
   const cleaned = normalizeAnswer(rawAnswer);
   const proposedValue = cleaned || "No answer captured";
@@ -423,11 +556,17 @@ export function previewAnswer(question: SessionQuestion, rawAnswer: string) {
 
 export async function polishReviewText(reviewText: string, locale = "en-US", languageCode = "en") {
   const trimmed = normalizeAnswer(reviewText);
-  if (!trimmed || !OPENAI_API_KEY) {
+  if (!trimmed) {
     return {
       polishedText: reviewText,
       changed: false
     };
+  }
+
+  const fallback = applyLocalGrammarFixes(trimmed, locale, languageCode);
+
+  if (!OPENAI_API_KEY) {
+    return fallback;
   }
 
   const response = await fetch("https://api.openai.com/v1/responses", {
@@ -451,10 +590,14 @@ export async function polishReviewText(reviewText: string, locale = "en-US", lan
               type: "input_text",
               text: [
                 "Return JSON only.",
-                "You are a multilingual travel-review copy polisher.",
+                "You are a multilingual review grammar fixer.",
                 "Keep the review in the same language as the original user text.",
-                "Only fix grammar, spelling, punctuation, spacing, and obvious casing issues.",
-                "Do not add new facts, do not shorten heavily, and do not intensify sentiment.",
+                "Only fix grammar, capitalization, punctuation, spacing, and obvious typo-level spelling issues.",
+                "Correct only obvious contextual spelling mistakes, missing apostrophes in common contractions, and clear comma mistakes.",
+                "Actively fix missing sentence-ending punctuation and obvious punctuation spacing when the intended sentence is clear.",
+                "You may make a few more obvious corrections when the intended wording is clear, including repeated-word cleanup and very simple punctuation fixes.",
+                "Prefer under-correcting to over-correcting. If a possible change is ambiguous, leave the user's wording alone.",
+                "Do not add new facts, do not rewrite for style, do not shorten heavily, and do not intensify sentiment.",
                 "Preserve the traveler's meaning and tone.",
                 'Return keys "polishedText" and "changed".'
               ].join(" ")
@@ -479,18 +622,12 @@ export async function polishReviewText(reviewText: string, locale = "en-US", lan
   });
 
   if (!response.ok) {
-    return {
-      polishedText: reviewText,
-      changed: false
-    };
+    return fallback;
   }
 
   const payload = (await response.json()) as { output_text?: string };
   if (!payload.output_text) {
-    return {
-      polishedText: reviewText,
-      changed: false
-    };
+    return fallback;
   }
 
   try {
@@ -499,16 +636,13 @@ export async function polishReviewText(reviewText: string, locale = "en-US", lan
       changed?: boolean;
     };
 
-    const polishedText = normalizeAnswer(parsed.polishedText ?? reviewText);
+    const polishedText = applyLocalGrammarFixes(parsed.polishedText ?? reviewText, locale, languageCode).polishedText;
 
     return {
       polishedText,
-      changed: Boolean(parsed.changed) && polishedText !== trimmed
+      changed: (Boolean(parsed.changed) || polishedText !== trimmed) && polishedText !== trimmed
     };
   } catch {
-    return {
-      polishedText: reviewText,
-      changed: false
-    };
+    return fallback;
   }
 }

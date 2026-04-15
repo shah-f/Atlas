@@ -67,6 +67,7 @@ type PropertyPhoto = {
 type PropertyVisual = {
   gradient: string;
   tile: string;
+  reveal: string;
   hasPhoto: boolean;
   photoAlt: string | null;
 };
@@ -164,11 +165,11 @@ const REVIEW_KEYWORDS = [
 
 const MAGIC_FIX_COPY_BY_LANGUAGE: Record<string, MagicFixCopy> = {
   en: {
-    title: "Magic fixes are ready",
-    body: "We cleaned up grammar and punctuation without changing what you meant. Want to submit the polished version?",
-    accept: "Accept magic fixes",
-    keep: "Keep my version",
-    loading: "Polishing your review..."
+    title: "We enhanced your review.",
+    body: "We only fixed grammar, capitalization, and punctuation without changing what you meant.",
+    accept: "Accept",
+    keep: "Decline",
+    loading: "OpenAI is enhancing your review..."
   },
   es: {
     title: "Tus arreglos magicos ya estan listos",
@@ -254,15 +255,6 @@ function hashString(input: string) {
   return Array.from(input).reduce((sum, character) => sum + character.charCodeAt(0), 0);
 }
 
-function initials(label: string) {
-  return label
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
-    .join("");
-}
-
 function getPropertyVisual(property: PropertySummary): PropertyVisual {
   const themes = [
     {
@@ -289,14 +281,18 @@ function getPropertyVisual(property: PropertySummary): PropertyVisual {
   if (!photo) {
     return {
       ...theme,
+      reveal: theme.gradient,
       hasPhoto: false,
       photoAlt: null
     };
   }
 
+  const revealUrl = photo.url.replace(/\.jpg$/i, "-reveal.jpg");
+
   return {
     gradient: `url("${photo.url}") center/cover no-repeat, ${theme.gradient}`,
     tile: `linear-gradient(180deg, rgba(16, 24, 63, 0.16), rgba(16, 24, 63, 0.04)), url("${photo.url}") center/cover no-repeat, ${theme.tile}`,
+    reveal: `url("${revealUrl}") center/cover no-repeat, ${theme.gradient}`,
     hasPhoto: true,
     photoAlt: photo.alt
   };
@@ -691,6 +687,8 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
   const [magicFixLoading, setMagicFixLoading] = useState(false);
   const [magicFixOpen, setMagicFixOpen] = useState(false);
   const [magicFixSuggestion, setMagicFixSuggestion] = useState("");
+  const [magicFixAnimating, setMagicFixAnimating] = useState(false);
+  const [magicFixReviewedKey, setMagicFixReviewedKey] = useState("");
   const [selectingStayId, setSelectingStayId] = useState<string | null>(null);
   const [selectingMode, setSelectingMode] = useState<InputMode | null>(null);
   const [doneModalOpen, setDoneModalOpen] = useState(false);
@@ -702,6 +700,8 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
   const tripTurnTimerRef = useRef<number | null>(null);
   const staySelectTimerRef = useRef<number | null>(null);
   const modeSelectTimerRef = useRef<number | null>(null);
+  const magicFixTimerRef = useRef<number | null>(null);
+  const magicFixRequestRef = useRef(0);
   const doneScreenRef = useRef<HTMLDivElement | null>(null);
   const selectedLanguage = LANGUAGES.find((language) => language.code === languageCode) ?? LANGUAGES[0];
   const selectedStay = customer.stays.find((stay) => stay.stayId === selectedStayId) ?? customer.stays[0];
@@ -746,6 +746,76 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
   const canContinueToQuestions = normalizeText(reviewText).length > 0 && stars > 0 && !submitting && !magicFixLoading;
   const canSubmit = canContinueToQuestions && !loadingQuestions && !savingAnswers;
 
+  function renderPuzzlePanel() {
+    if (!propertyVisual) {
+      return null;
+    }
+
+    return (
+      <div className="puzzle-panel">
+        <div className="puzzle-header">
+          <span className="puzzle-title">Reveal the property</span>
+          <span className="puzzle-prog">{puzzlePieces} / 8</span>
+        </div>
+        <div className="puzzle-board" style={{ background: propertyVisual.reveal }}>
+          <div className="puzzle-mask-grid">
+            {Array.from({ length: 8 }, (_, index) => (
+              <div className={cx("puzzle-mask", index < puzzlePieces ? "revealed" : "covered")} key={index} />
+            ))}
+          </div>
+        </div>
+        <div className="puzzle-fact">
+          <strong>Did you know?</strong>{" "}
+          {puzzleFacts[Math.max(0, Math.min(puzzlePieces - 1, puzzleFacts.length - 1))] ||
+            "Answer questions to reveal pieces and unlock property facts."}
+        </div>
+      </div>
+    );
+  }
+
+  function getMagicFixReviewKey(text: string) {
+    return `${selectedLanguage.locale}:${normalizeText(text)}`;
+  }
+
+  function stopMagicFixAnimation() {
+    if (typeof window !== "undefined" && magicFixTimerRef.current) {
+      window.clearTimeout(magicFixTimerRef.current);
+      magicFixTimerRef.current = null;
+    }
+    setMagicFixAnimating(false);
+  }
+
+  function animateMagicFixSuggestion(targetText: string) {
+    if (typeof window === "undefined") {
+      setMagicFixSuggestion(targetText);
+      setMagicFixAnimating(false);
+      return;
+    }
+
+    stopMagicFixAnimation();
+    setMagicFixAnimating(true);
+    setMagicFixSuggestion("");
+
+    let index = 0;
+    const totalLength = targetText.length;
+    const step = Math.max(1, Math.ceil(totalLength / 90));
+
+    const tick = () => {
+      index = Math.min(totalLength, index + step);
+      setMagicFixSuggestion(targetText.slice(0, index));
+
+      if (index < totalLength) {
+        magicFixTimerRef.current = window.setTimeout(tick, 18);
+        return;
+      }
+
+      magicFixTimerRef.current = null;
+      setMagicFixAnimating(false);
+    };
+
+    tick();
+  }
+
   function resetInlinePromptState() {
     setActiveInlinePromptKey((current) => (current === null ? current : null));
     setInlinePromptKeys((current) => (current.length ? [] : current));
@@ -773,9 +843,12 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
     setQuestionRequestedKey("");
     setStampAnimationActive(false);
     setNewStampStayId(null);
+    magicFixRequestRef.current += 1;
     setMagicFixOpen(false);
     setMagicFixLoading(false);
     setMagicFixSuggestion("");
+    stopMagicFixAnimation();
+    setMagicFixReviewedKey("");
     setSelectingStayId(null);
     setSelectingMode(null);
     setDoneModalOpen(false);
@@ -1027,8 +1100,8 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
     }
   }
 
-  async function requestMagicFixes() {
-    const trimmed = normalizeText(reviewText);
+  async function requestMagicFixes(sourceText = reviewText) {
+    const trimmed = normalizeText(sourceText);
     if (!trimmed) {
       return null;
     }
@@ -1064,6 +1137,49 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
     };
   }
 
+  async function maybeOpenMagicFixes() {
+    const trimmed = normalizeText(reviewText);
+    if (!trimmed) {
+      return false;
+    }
+
+    const reviewKey = getMagicFixReviewKey(trimmed);
+    if (magicFixReviewedKey === reviewKey) {
+      return false;
+    }
+
+    const requestId = magicFixRequestRef.current + 1;
+    magicFixRequestRef.current = requestId;
+    stopMagicFixAnimation();
+    setMagicFixSuggestion("");
+    setMagicFixOpen(true);
+    setMagicFixLoading(true);
+    stopVoiceCapture();
+
+    try {
+      const polished = await requestMagicFixes(trimmed).catch(() => null);
+      if (magicFixRequestRef.current !== requestId) {
+        return false;
+      }
+
+      const cleaned = normalizeText(polished?.polishedText ?? "");
+      setMagicFixReviewedKey(reviewKey);
+
+      if (polished?.changed && cleaned && cleaned !== trimmed) {
+        animateMagicFixSuggestion(polished.polishedText);
+        return true;
+      }
+
+      setMagicFixOpen(false);
+      setMagicFixSuggestion("");
+      return false;
+    } finally {
+      if (magicFixRequestRef.current === requestId) {
+        setMagicFixLoading(false);
+      }
+    }
+  }
+
   async function finalizeSubmission(
     finalReviewText: string,
     polishedReviewText: string | null,
@@ -1097,8 +1213,10 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
     onCustomerUpdate(payload.customer);
     setNewStampStayId(selectedStay.stayId);
     setActiveTripId(`${selectedStay.tripId}:${selectedProperty.country}`);
+    magicFixRequestRef.current += 1;
     setMagicFixOpen(false);
     setMagicFixSuggestion("");
+    stopMagicFixAnimation();
     setDoneModalOpen(true);
     setStage("done");
     stopVoiceCapture();
@@ -1110,45 +1228,45 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
     }
 
     setSubmitting(true);
-    setMagicFixLoading(true);
     setError("");
 
     try {
-      const nextAnswerPreviews = await captureAnswerPreviews();
-
-      const polished = await requestMagicFixes().catch(() => null);
-      const cleaned = normalizeText(polished?.polishedText ?? "");
-      const original = normalizeText(reviewText);
-
-      if (polished?.changed && cleaned && cleaned !== original) {
-        setMagicFixSuggestion(polished.polishedText);
-        setMagicFixOpen(true);
-        stopVoiceCapture();
+      const openedMagicFix = await maybeOpenMagicFixes();
+      if (openedMagicFix) {
         return;
       }
 
+      const nextAnswerPreviews = await captureAnswerPreviews();
       await finalizeSubmission(reviewText, null, nextAnswerPreviews);
     } catch (submitError) {
       const message = submitError instanceof Error ? submitError.message : "Could not submit this review.";
       setError(message);
     } finally {
       setSubmitting(false);
-      setMagicFixLoading(false);
     }
   }
 
   function acceptMagicFixes() {
-    finalizeSubmission(magicFixSuggestion || reviewText, magicFixSuggestion || reviewText).catch((submitError) => {
-      const message = submitError instanceof Error ? submitError.message : "Could not save the polished review.";
-      setError(message);
-    });
+    const nextReviewText = normalizeText(magicFixSuggestion) || reviewText;
+    magicFixRequestRef.current += 1;
+    stopMagicFixAnimation();
+    setReviewText(nextReviewText);
+    setMagicFixReviewedKey(getMagicFixReviewKey(nextReviewText));
+    setMagicFixOpen(false);
+    setMagicFixSuggestion("");
   }
 
   function keepOriginalReview() {
-    finalizeSubmission(reviewText, null).catch((submitError) => {
-      const message = submitError instanceof Error ? submitError.message : "Could not save the original review.";
-      setError(message);
-    });
+    magicFixRequestRef.current += 1;
+    stopMagicFixAnimation();
+    setMagicFixReviewedKey(getMagicFixReviewKey(reviewText));
+    setMagicFixOpen(false);
+    setMagicFixSuggestion("");
+  }
+
+  function moveToFollowUps() {
+    setStage("questions");
+    maybeOpenMagicFixes().catch(() => undefined);
   }
 
   async function handlePhotoSelection(files: FileList | null) {
@@ -1394,6 +1512,14 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
   ]);
 
   useEffect(() => {
+    return () => {
+      if (typeof window !== "undefined" && magicFixTimerRef.current) {
+        window.clearTimeout(magicFixTimerRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     if (stage !== "review" || inputMode !== "voice" || !voiceSupported || spokenIntroRef.current || !selectedProperty) {
       return;
     }
@@ -1625,9 +1751,7 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
                     className="prop-photo-fb"
                     role="img"
                     style={{ background: visual.tile }}
-                  >
-                    {!visual.hasPhoto ? initials(property.displayName) : null}
-                  </div>
+                  />
                   <div className="prop-body">
                     <div className="prop-city stay-card-city">
                       {[property.city, property.province].filter(Boolean).join(", ")}
@@ -1768,7 +1892,6 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
               <div className="rev-hero" style={{ background: propertyVisual.gradient }}>
                 <div className="rev-grad" />
                 <div className="rev-info">
-                  <div className="rev-av">{initials(selectedProperty.displayName)}</div>
                   <div>
                     <div className="rev-name">{selectedProperty.displayName}</div>
                     <div className="rev-loc">
@@ -1823,11 +1946,13 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
 
                 <div className="review-section">
                   <div className="section-lbl">Your review</div>
-                  <p className="review-intro">
-                    {inputMode === "voice"
-                      ? "Voice mode is active. Dictate your review here, then continue to the next page for any follow-up questions."
-                      : "Write freely. ReviewIQ reads along and suggests stale or missing details to cover before the adaptive follow-up page."}
-                  </p>
+                  <div className={cx("nudge", "show", nudge.tone)}>
+                    <div className="n-pip">{nudge.tone === "great" ? "OK" : "AI"}</div>
+                    <div className="n-body">
+                      <div className="n-tag">ReviewIQ</div>
+                      <div className="n-txt">{nudge.text}</div>
+                    </div>
+                  </div>
                   <div className="ta-wrap">
                     <textarea
                       className="main-ta"
@@ -1865,14 +1990,6 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
                           {reviewWordCount} {reviewWordCount === 1 ? "word" : "words"}
                         </span>
                       </div>
-                    </div>
-                  </div>
-
-                  <div className={cx("nudge", "show", nudge.tone)}>
-                    <div className="n-pip">{nudge.tone === "great" ? "OK" : "AI"}</div>
-                    <div className="n-body">
-                      <div className="n-tag">ReviewIQ</div>
-                      <div className="n-txt">{nudge.text}</div>
                     </div>
                   </div>
                 </div>
@@ -1931,7 +2048,7 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
                         return;
                       }
 
-                      setStage("questions");
+                      moveToFollowUps();
                     }}
                     type="button"
                   >
@@ -1947,30 +2064,7 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
               </div>
             </div>
 
-            <div className="puzzle-panel">
-              <div className="puzzle-header">
-                <span className="puzzle-title">Reveal the property</span>
-                <span className="puzzle-prog">{puzzlePieces} / 8</span>
-              </div>
-              <div className="puzzle-grid">
-                {Array.from({ length: 8 }, (_, index) => (
-                  <div
-                    className={cx("pp", index < puzzlePieces ? "revealed" : "unrevealed")}
-                    key={index}
-                    style={{ background: propertyVisual.tile }}
-                  >
-                    {index >= puzzlePieces ? (
-                      <div className="pp-lock">
-                        <div className="pp-num">{index + 1}</div>
-                      </div>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-              <div className="puzzle-fact">
-                <strong>Did you know?</strong> {puzzleFacts[Math.max(0, Math.min(puzzlePieces - 1, puzzleFacts.length - 1))] || "Answer questions to reveal pieces and unlock property facts."}
-              </div>
-            </div>
+            {renderPuzzlePanel()}
           </div>
             </div>
 
@@ -1980,7 +2074,6 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
               <div className="rev-hero" style={{ background: propertyVisual.gradient }}>
                 <div className="rev-grad" />
                 <div className="rev-info">
-                  <div className="rev-av">{initials(selectedProperty.displayName)}</div>
                   <div>
                     <div className="rev-name">{selectedProperty.displayName}</div>
                     <div className="rev-loc">
@@ -1999,14 +2092,6 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
                   <button className="btn-s" disabled={!canSubmit} onClick={() => submitReview().catch(() => undefined)} type="button">
                     Skip
                   </button>
-                </div>
-
-                <div className="card">
-                  <div className="card-hd">
-                    <div className="card-ico">R</div>
-                    <div className="card-title">Your review draft</div>
-                  </div>
-                  <div className="followup-review-preview">{reviewText}</div>
                 </div>
 
                 <div className="smart-q-section">
@@ -2051,7 +2136,6 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
                               Question {index + 1} of {followUpQuestions.length} • {question.label}
                             </div>
                             <div className="smart-q-text">{question.prompt}</div>
-                            <div className="smart-q-helper">{question.whyNow}</div>
 
                             {questionChoices.length ? (
                               <div className="choice-grid">
@@ -2119,30 +2203,7 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
               </div>
             </div>
 
-            <div className="puzzle-panel">
-              <div className="puzzle-header">
-                <span className="puzzle-title">Reveal the property</span>
-                <span className="puzzle-prog">{puzzlePieces} / 8</span>
-              </div>
-              <div className="puzzle-grid">
-                {Array.from({ length: 8 }, (_, index) => (
-                  <div
-                    className={cx("pp", index < puzzlePieces ? "revealed" : "unrevealed")}
-                    key={index}
-                    style={{ background: propertyVisual.tile }}
-                  >
-                    {index >= puzzlePieces ? (
-                      <div className="pp-lock">
-                        <div className="pp-num">{index + 1}</div>
-                      </div>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-              <div className="puzzle-fact">
-                <strong>Did you know?</strong> {puzzleFacts[Math.max(0, Math.min(puzzlePieces - 1, puzzleFacts.length - 1))] || "Answer questions to reveal pieces and unlock property facts."}
-              </div>
-            </div>
+            {renderPuzzlePanel()}
           </div>
             </div>
 
@@ -2322,18 +2383,40 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
       {magicFixOpen ? (
         <div className="magicfix-overlay">
           <div className="magicfix-card">
-            <div className="magicfix-kicker">Magic polish</div>
+            <div className="magicfix-kicker">OpenAI enhancement</div>
             <h3 className="magicfix-title">{magicFixCopy.title}</h3>
-            <p className="magicfix-body">{magicFixCopy.body}</p>
+            <p className="magicfix-body">
+              {magicFixLoading
+                ? `${magicFixCopy.loading} You can watch the fixes appear, then accept or decline them.`
+                : magicFixAnimating
+                  ? "We are typing in the grammar and capitalization fixes now. You can edit the enhanced version once it finishes."
+                  : magicFixCopy.body}
+            </p>
 
             <div className="magicfix-grid">
               <div className="magicfix-panel">
-                <div className="magicfix-panel-lbl">Original</div>
+                <div className="magicfix-panel-lbl">Your version</div>
                 <div className="magicfix-panel-copy">{reviewText}</div>
               </div>
               <div className="magicfix-panel polished">
-                <div className="magicfix-panel-lbl">Polished</div>
-                <div className="magicfix-panel-copy">{magicFixSuggestion}</div>
+                <div className="magicfix-panel-lbl">Enhanced version</div>
+                <div className="magicfix-status">
+                  {magicFixLoading
+                    ? "OpenAI is enhancing your review..."
+                    : magicFixAnimating
+                      ? "Applying fixes..."
+                      : "You can edit this version before accepting."}
+                </div>
+                <textarea
+                  className={cx("magicfix-edit", (magicFixLoading || magicFixAnimating) && "is-busy")}
+                  dir={selectedLanguage.dir}
+                  disabled={magicFixLoading || magicFixAnimating}
+                  lang={selectedLanguage.locale}
+                  onChange={(event) => setMagicFixSuggestion(event.target.value)}
+                  placeholder={magicFixLoading ? "Enhancing your review..." : ""}
+                  value={magicFixSuggestion}
+                />
+                {magicFixLoading || magicFixAnimating ? <div className="magicfix-cursor" aria-hidden="true" /> : null}
               </div>
             </div>
 
@@ -2341,7 +2424,7 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
               <button className="btn-s" onClick={keepOriginalReview} type="button">
                 {magicFixCopy.keep}
               </button>
-              <button className="btn-p" onClick={acceptMagicFixes} type="button">
+              <button className="btn-p" disabled={magicFixLoading || magicFixAnimating} onClick={acceptMagicFixes} type="button">
                 {magicFixCopy.accept}
               </button>
             </div>
