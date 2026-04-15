@@ -1,0 +1,195 @@
+{
+  "customers": [
+    {
+      "id": "maya-chen",
+      "firstName": "Maya",
+      "lastName": "Chen",
+      "email": "maya.chen@example.com",
+      "headline": "Remote product lead who notices check-in flow, cleanliness, and Wi-Fi quality fast.",
+      "companion": "Traveling with her corgi, Nori.",
+      "traits": [
+        "Dog parent",
+        "Late arrivals",
+        "Quiet-room seeker"
+      ],
+      "trips": [
+        {
+          "tripId": "maya-work-anywhere-loop",
+          "title": "California to Colorado Loop",
+          "coverCountry": "United States",
+          "subtitle": "Three western U.S. stays with stale cleanliness, noise, and property-condition details."
+        }
+      ],
+      "stays": [
+        {
+          "stayId": "maya-stay-monterey",
+          "tripId": "maya-work-anywhere-loop",
+          "propertyId": "fa014137b3ea9af6a90c0a86a1d099e46f7e56d6eb33db1ad1ec4bdac68c3caa",
+          "checkIn": "2026-03-02",
+          "checkOut": "2026-03-05",
+          "roomType": "Premium King",
+          "confirmation": "#EX-MAYA-3182",
+          "staleFocus": "Cleanliness",
+          "staleReason": "Recent signals about cleanliness conflict, so this is the highest-value detail to refresh."
+        },
+        {
+          "stayId": "maya-stay-bell-gardens",
+          "tripId": "maya-work-anywhere-loop",
+          "propertyId": "3216b1b7885bffdb336265a8de7322ba0cd477cfb3d4f99d19acf488f76a1941",
+          "checkIn": "2026-03-05",
+          "checkOut": "2026-03-07",
+          "roomType": "Classic Double",
+          "confirmation": "#EX-MAYA-4028",
+          "staleFocus": "Noise level",
+          "staleReason": "Recent signals about noise level conflict, so this is the highest-value detail to refresh."
+        },
+        {
+          "stayId": "maya-stay-broomfield",
+          "tripId": "maya-work-anywhere-loop",
+          "propertyId": "db38b19b897dbece3e34919c662b3fd66d23b615395d11fb69264dd3a9b17723",
+          "checkIn": "2026-03-07",
+          "checkOut": "2026-03-10",
+          "roomType": "Corner Studio",
+          "confirmation": "#EX-MAYA-5106",
+          "staleFocus": "Property condition",
+          "staleReason": "Recent signals about property condition conflict, so this is the highest-value detail to refresh."
+        }
+      ],
+      "journal": {
+        "reviewedStayIds": []
+      },
+      "submissions": []
+    },
+    {
+      "id": "luca-rossi",
+      "firstName": "Luca",
+      "lastName": "Rossi",
+      "email": "luca.rossi@example.com",
+      "headline": "Design director on a winter rail loop who always notices noise, check-in, and room comfort.",
+      "companion": "Traveling solo with a camera and a very late espresso habit.",
+      "traits": [
+        "Sleeps light",
+        "Trains over taxis",
+        "Design-focused"
+      ],
+      "trips": [
+        {
+          "tripId": "luca-euro-loop",
+          "title": "Italy to Germany Rail Loop",
+          "coverCountry": "Italy & Germany",
+          "subtitle": "Two Italian stops and two German stays with stale check-in, noise, and room-comfort details."
+        }
+      ],
+      "stays": [
+        {
+          "stayId": "luca-stay-rome",
+          "tripId": "luca-euro-loop",
+          "propertyId": "823fb2499b4e37d99acb65e7198e75965d6496fd1c579f976205c0e6179206df",
+          "checkIn": "2026-02-14",
+          "checkOut": "2026-02-17",
+          "roomType": "Deluxe Room",
+          "confirmation": "#EX-LUCA-1901",
+          "staleFocus": "Check-in",
+          "staleReason": "Recent signals about check-in conflict, so this is the highest-value detail to refresh."
+        },
+        {
+          "stayId": "luca-stay-pompei",
+          "tripId": "luca-euro-loop",
+          "propertyId": "110f01b8ae518a0ee41047bce5c22572988a435e10ead72dc1af793bba8ce0b0",
+          "checkIn": "2026-02-17",
+          "checkOut": "2026-02-19",
+          "roomType": "Ocean View Room",
+          "confirmation": "#EX-LUCA-2447",
+          "staleFocus": "Noise level",
+          "staleReason": "Recent signals about noise level conflict, so this is the highest-value detail to refresh."
+        },
+        {
+          "stayId": "luca-stay-freudenstadt",
+          "tripId": "luca-euro-loop",
+          "propertyId": "5f5a0cd8662f0ddf297f2d27358f680daab5d3ac22fd45a4e1c3c3ec2c101a12",
+          "checkIn": "2026-02-20",
+          "checkOut": "2026-02-22",
+          "roomType": "Classic Double",
+          "confirmation": "#EX-LUCA-3279",
+          "staleFocus": "Noise level",
+          "staleReason": "The listing has weak structured coverage for noise level, so a quick guest confirmation adds new value."
+        },
+        {
+          "stayId": "luca-stay-bochum",
+          "tripId": "luca-euro-loop",
+          "propertyId": "9a0043fd4258a1286db1e253ca591662b3aac849da12d0d4f67e08b8f59be65f",
+          "checkIn": "2026-02-22",
+          "checkOut": "2026-02-25",
+          "roomType": "Double Queen Suite",
+          "confirmation": "#EX-LUCA-3884",
+          "staleFocus": "Noise level",
+          "staleReason": "The listing has weak structured coverage for noise level, so a quick guest confirmation adds new value."
+        }
+      ],
+      "journal": {
+        "reviewedStayIds": []
+      },
+      "submissions": []
+    },
+    {
+      "id": "sofia-alvarez",
+      "firstName": "Sofia",
+      "lastName": "Alvarez",
+      "email": "sofia.alvarez@example.com",
+      "headline": "Adventure planner who travels with her dog and notices stale amenity details immediately.",
+      "companion": "Traveling with her rescue pup, Sol.",
+      "traits": [
+        "Pet owner",
+        "Nature-first",
+        "Practical reviewer"
+      ],
+      "trips": [
+        {
+          "tripId": "sofia-adventure-hop",
+          "title": "Costa Rica to Florida Nature Loop",
+          "coverCountry": "Costa Rica & Florida",
+          "subtitle": "A pet-friendly route centered on Costa Rica and Florida stays that need fresh traveler confirmation."
+        }
+      ],
+      "stays": [
+        {
+          "stayId": "sofia-stay-san-isidro",
+          "tripId": "sofia-adventure-hop",
+          "propertyId": "3b984f3ba8df55b2609a1e33fd694cf8407842e1d833c9b4d993b07fc83a2820",
+          "checkIn": "2026-03-18",
+          "checkOut": "2026-03-20",
+          "roomType": "Premium King",
+          "confirmation": "#EX-SOFIA-1382",
+          "staleFocus": "Noise level",
+          "staleReason": "The listing has weak structured coverage for noise level, so a quick guest confirmation adds new value."
+        },
+        {
+          "stayId": "sofia-stay-new-smyrna",
+          "tripId": "sofia-adventure-hop",
+          "propertyId": "f2d8d9557208d58577e9df7ff34e42bf86fb5b10fdfae0c3040d14c374a2a2b9",
+          "checkIn": "2026-03-22",
+          "checkOut": "2026-03-24",
+          "roomType": "Ocean View Room",
+          "confirmation": "#EX-SOFIA-4470",
+          "staleFocus": "Noise level",
+          "staleReason": "The listing has weak structured coverage for noise level, so a quick guest confirmation adds new value."
+        },
+        {
+          "stayId": "sofia-stay-ocala",
+          "tripId": "sofia-adventure-hop",
+          "propertyId": "7d027ef72c02eaa17af3c993fd5dba50d17b41a6280389a46c13c7e2c32a5b06",
+          "checkIn": "2026-03-24",
+          "checkOut": "2026-03-27",
+          "roomType": "King Suite",
+          "confirmation": "#EX-SOFIA-5218",
+          "staleFocus": "Property condition",
+          "staleReason": "Recent signals about property condition conflict, so this is the highest-value detail to refresh."
+        }
+      ],
+      "journal": {
+        "reviewedStayIds": []
+      },
+      "submissions": []
+    }
+  ]
+}
