@@ -22,6 +22,7 @@
   --r-lg: 8px;
   --shadow: 0 1px 4px rgba(0, 0, 0, 0.08), 0 2px 12px rgba(0, 0, 0, 0.05);
   --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.14);
+  --title-font: "Nunito", "Avenir Next", "Segoe UI", sans-serif;
 }
 
 *,
@@ -141,8 +142,9 @@ a {
 }
 
 .demo-profile-name {
+  font-family: var(--title-font);
   font-size: 22px;
-  font-weight: 900;
+  font-weight: 800;
   color: var(--navy);
   margin-bottom: 4px;
 }
@@ -234,6 +236,16 @@ a {
   letter-spacing: 0.02em;
 }
 
+.demo-brand-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(25, 30, 59, 0.08);
+}
+
 .app-header {
   position: sticky;
   top: 0;
@@ -261,6 +273,12 @@ a {
   gap: 16px;
 }
 
+.app-brand {
+  flex-wrap: nowrap;
+  gap: 7px;
+  align-items: center;
+}
+
 .app-meta {
   flex-wrap: wrap;
   justify-content: flex-end;
@@ -269,54 +287,93 @@ a {
 .brand-logo {
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-weight: 700;
-  color: #191e3b;
+  flex-shrink: 0;
 }
 
-.brand-mark {
-  width: 42px;
-  height: 42px;
-  border-radius: 10px;
-  background: #ffd500;
+.brand-image {
+  display: block;
+  width: 108px;
+  max-width: min(108px, 28vw);
+  height: auto;
+}
+
+.brand-atlas-image {
+  display: block;
+  width: 120px;
+  max-width: min(120px, 30vw);
+  height: auto;
+  filter: brightness(0) saturate(100%);
+  margin-right: -6px;
+  transform: translateY(1px);
+}
+
+.brand-by {
+  font-size: 16px;
+  font-weight: 700;
+  color: rgba(25, 30, 59, 0.58);
+  letter-spacing: 0.01em;
+  line-height: 1;
+  transform: translateY(4px);
+}
+
+.brand-logo {
+  transform: translateY(4px);
+}
+
+.app-footer {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 28px 32px;
+}
+
+.app-footer-inner {
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  font-weight: 900;
-  color: #182041;
+  justify-content: space-between;
+  gap: 18px;
+  border-top: 1px solid rgba(25, 30, 59, 0.08);
+  padding-top: 18px;
 }
 
-.brand-word {
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: -0.04em;
-}
-
-.app-brand-copy {
+.app-footer-copy {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 
-.app-badge {
+.atlas-signature {
+  display: block;
+  height: auto;
+  filter: brightness(0) saturate(100%);
+}
+
+.atlas-signature-footer {
+  width: 116px;
+  max-width: min(116px, 28vw);
+}
+
+.atlas-signature-demo {
+  width: 104px;
+  max-width: min(104px, 24vw);
+}
+
+.app-footer-subtitle,
+.demo-brand-copy {
+  margin: 0;
+  font-size: 14px;
+  color: rgba(25, 30, 59, 0.72);
+}
+
+.app-footer-note {
   display: inline-flex;
   align-items: center;
-  width: fit-content;
   border-radius: 999px;
-  padding: 5px 10px;
-  background: #eef4ff;
-  color: #1668e3;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.app-subtitle {
-  font-size: 14px;
-  color: #5d667f;
-  font-weight: 600;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, rgba(22, 104, 227, 0.08), rgba(254, 191, 79, 0.18));
+  color: #23315b;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }
 
 .app-link,
@@ -515,18 +572,18 @@ a {
   }
 }
 
-.pg-eye {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: #1668e3;
-  margin-bottom: 6px;
+.demo-head-logo {
+  display: block;
+  width: 126px;
+  max-width: min(126px, 34vw);
+  height: auto;
+  margin-bottom: 10px;
 }
 
 .pg-h1 {
+  font-family: var(--title-font);
   font-size: 32px;
-  font-weight: 700;
+  font-weight: 800;
   color: #1d2340;
   margin-bottom: 8px;
   line-height: 1.15;
@@ -654,8 +711,7 @@ a {
 
 .stay-card,
 .card,
-.badges-wrap,
-.impact-stat-card {
+.badges-wrap {
   background: #fff;
   border-radius: 24px;
   box-shadow: 0 8px 24px rgba(21, 34, 67, 0.06);
@@ -967,8 +1023,9 @@ a {
 
 .mode-title,
 .card-title {
+  font-family: var(--title-font);
   font-size: 20px;
-  font-weight: 700;
+  font-weight: 800;
   color: #1d2340;
 }
 
@@ -1110,8 +1167,7 @@ a {
 .section-lbl,
 .badges-lbl,
 .taste-eye,
-.taste-recs-lbl,
-.ans-q {
+.taste-recs-lbl {
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
@@ -1198,6 +1254,107 @@ a {
 
 .voice-inline {
   margin-top: 10px;
+}
+
+.voice-review-card {
+  border: 2px solid var(--border);
+  border-radius: var(--r);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(246, 250, 255, 0.96));
+  padding: 16px;
+}
+
+.voice-review-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(22, 104, 227, 0.18);
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--navy);
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.voice-review-btn:hover:not(:disabled) {
+  border-color: rgba(22, 104, 227, 0.34);
+  box-shadow: 0 10px 20px rgba(20, 39, 89, 0.08);
+}
+
+.voice-review-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.voice-review-btn.rec {
+  border-color: rgba(201, 54, 73, 0.3);
+  color: #b72842;
+  background: rgba(255, 245, 247, 0.98);
+}
+
+.voice-review-btn-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #1668e3;
+  box-shadow: 0 0 0 5px rgba(22, 104, 227, 0.12);
+}
+
+.voice-review-btn.rec .voice-review-btn-dot {
+  background: #c93649;
+  box-shadow: 0 0 0 5px rgba(201, 54, 73, 0.14);
+}
+
+.voice-review-helper {
+  margin-top: 12px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--hint);
+}
+
+.voice-review-transcript-wrap {
+  margin-top: 14px;
+}
+
+.voice-review-transcript-lbl {
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(30, 36, 58, 0.42);
+  margin-bottom: 8px;
+}
+
+.voice-review-transcript {
+  min-height: 124px;
+  padding: 14px 15px;
+  border: 1.5px solid rgba(28, 41, 82, 0.12);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.92);
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--text);
+  width: 100%;
+  white-space: pre-wrap;
+  resize: vertical;
+  outline: none;
+}
+
+.voice-review-transcript.empty {
+  color: var(--hint);
+}
+
+.voice-review-transcript:focus {
+  border-color: rgba(62, 90, 255, 0.42);
+  box-shadow: 0 0 0 3px rgba(62, 90, 255, 0.12);
+}
+
+.voice-review-meta {
+  margin-top: 14px;
+  padding: 0;
+  border-top: none;
 }
 
 .ta-right,
@@ -1400,8 +1557,7 @@ a {
   margin-bottom: 16px;
 }
 
-.smart-q-pill,
-.quest-badge {
+.smart-q-pill {
   background: linear-gradient(135deg, var(--navy) 0%, #30446f 100%);
   color: #fff;
   font-size: 9px;
@@ -1515,8 +1671,9 @@ a {
 }
 
 .evidence-title {
+  font-family: var(--title-font);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--hint);
@@ -1570,8 +1727,9 @@ a {
 }
 
 .impact-msg-title {
+  font-family: var(--title-font);
   font-size: 13px;
-  font-weight: 900;
+  font-weight: 800;
   color: #fff;
   margin-bottom: 4px;
   line-height: 1.4;
@@ -1879,12 +2037,7 @@ a {
 .stampedia-eye {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-family: 'Caveat', cursive;
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  color: #70644a;
+  gap: 2px;
   margin-bottom: 8px;
   background: rgba(255, 248, 228, 0.85);
   border: 1px solid rgba(140, 115, 75, 0.2);
@@ -1893,11 +2046,19 @@ a {
   box-shadow: 0 2px 8px rgba(140, 100, 30, 0.08);
 }
 
-.stampedia-eye::before {
-  content: "📬";
-  font-size: 14px;
-  letter-spacing: 0;
-  font-family: inherit;
+.stampedia-eye-logo {
+  display: block;
+  width: 56px;
+  height: auto;
+  filter: brightness(0) saturate(100%);
+  margin-right: -2px;
+}
+
+.stampedia-eye-text {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #70644a;
 }
 
 .stampedia-trip-title {
@@ -1908,7 +2069,7 @@ a {
   padding: 0;
   background: transparent;
   color: var(--navy);
-  font-family: 'Caveat', cursive;
+  font-family: 'Nothing You Could Do', cursive;
   font-size: 42px;
   font-weight: 700;
   line-height: 1.0;
@@ -2040,7 +2201,7 @@ a {
   background-position: 9px 9px;
 }
 
-.stampedia-page-left > :not(.stampedia-margin-doodles):not(.stampedia-sparkles):not(.stampedia-postmark),
+.stampedia-page-left > :not(.stampedia-margin-doodles):not(.stampedia-sparkles),
 .stampedia-page-right > :not(.stampedia-margin-doodles) {
   position: relative;
   z-index: 1;
@@ -2164,7 +2325,7 @@ a {
 }
 
 .stampedia-profile-name {
-  font-family: 'Caveat', cursive;
+  font-family: 'Nothing You Could Do', cursive;
   font-size: 18px;
   line-height: 1.3;
   font-weight: 600;
@@ -2216,7 +2377,7 @@ a {
   height: 18px;
   margin-top: -9px;
   color: rgba(42, 83, 211, 0.82);
-  animation: stampediaRouteFly 1400ms cubic-bezier(0.2, 0.9, 0.2, 1);
+  animation: stampediaRouteFly 6400ms cubic-bezier(0.2, 0.9, 0.2, 1) infinite;
 }
 
 .stampedia-route-plane {
@@ -2244,6 +2405,46 @@ a {
 
 .stampedia-sparkle:nth-child(2n) {
   background: radial-gradient(circle, rgba(42, 83, 211, 0.7) 0%, rgba(42, 83, 211, 0.14) 72%, transparent 100%);
+}
+
+.stampedia-twinkles {
+  position: absolute;
+  inset: 12px 12px 18px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.stampedia-twinkle {
+  position: absolute;
+  opacity: 0;
+  filter: drop-shadow(0 0 8px rgba(255, 212, 104, 0.22));
+  animation: stampediaTwinkleBlink 6.8s ease-in-out infinite;
+}
+
+.stampedia-twinkle::before,
+.stampedia-twinkle::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(180deg, rgba(254, 191, 79, 0.92), rgba(42, 83, 211, 0.26));
+}
+
+.stampedia-twinkle::before {
+  width: 2px;
+  height: 100%;
+}
+
+.stampedia-twinkle::after {
+  width: 100%;
+  height: 2px;
+}
+
+.stampedia-twinkle:nth-child(2n)::before,
+.stampedia-twinkle:nth-child(2n)::after {
+  background: linear-gradient(180deg, rgba(42, 83, 211, 0.78), rgba(254, 191, 79, 0.22));
 }
 
 .stampedia-margin-doodles {
@@ -2426,7 +2627,7 @@ a {
 
 .stampedia-fact strong {
   display: block;
-  font-family: 'Caveat', cursive;
+  font-family: 'Nothing You Could Do', cursive;
   color: var(--navy);
   font-size: 16px;
   font-weight: 700;
@@ -2440,7 +2641,7 @@ a {
   background: rgba(255, 252, 238, 0.82);
   border: 1px solid rgba(121, 107, 79, 0.18);
   border-left: 3px solid rgba(244, 169, 36, 0.55);
-  font-family: 'Caveat', cursive;
+  font-family: 'Nothing You Could Do', cursive;
   font-size: 15px;
   line-height: 1.6;
   color: rgba(30, 36, 58, 0.75);
@@ -2450,6 +2651,7 @@ a {
 .stampedia-note::before {
   content: "✎ journal note";
   display: block;
+  font-family: var(--title-font);
   font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.14em;
@@ -2508,67 +2710,23 @@ a {
   padding: 10px 0 0;
 }
 
-.stampedia-postmark {
-  position: absolute;
-  right: -44px;
-  bottom: 24px;
-  width: 160px;
-  height: 160px;
-  border-radius: 50%;
-  border: 3px double rgba(186, 72, 72, 0.32);
-  color: rgba(186, 72, 72, 0.36);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  transform: rotate(8deg);
-  pointer-events: none;
-  z-index: 0;
-  background: radial-gradient(circle, rgba(186, 72, 72, 0.04) 0%, transparent 70%);
-}
-
-.stampedia-postmark::before,
-.stampedia-postmark::after {
-  content: "";
-  position: absolute;
-  inset: 12px;
-  border-radius: 50%;
-  border: 1px solid rgba(186, 72, 72, 0.22);
-}
-
-.stampedia-postmark::after {
-  inset: 28px;
-}
-
-.stampedia-postmark span:first-child {
-  font-family: 'Caveat', cursive;
-  font-size: 30px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  line-height: 1;
-}
-
-.stampedia-postmark span:last-child {
-  font-family: 'Patrick Hand', cursive;
-  font-size: 11px;
-  font-weight: 400;
-  letter-spacing: 0.22em;
-  margin-top: 8px;
-  line-height: 1;
-}
-
 @keyframes stampediaRouteFly {
   0% {
     transform: translateX(0) translateY(6px) rotate(-8deg);
     opacity: 0;
   }
 
-  18% {
+  4% {
     opacity: 1;
   }
 
-  55% {
+  12% {
     transform: translateX(68px) translateY(-8px) rotate(3deg);
+  }
+
+  22% {
+    transform: translateX(136px) translateY(0) rotate(10deg);
+    opacity: 1;
   }
 
   100% {
@@ -2587,6 +2745,30 @@ a {
   50% {
     transform: translateY(-7px) scale(1.1);
     opacity: 0.9;
+  }
+}
+
+@keyframes stampediaTwinkleBlink {
+  0%,
+  72%,
+  100% {
+    transform: scale(0.55) rotate(0deg);
+    opacity: 0;
+  }
+
+  76% {
+    transform: scale(0.9) rotate(8deg);
+    opacity: 0.35;
+  }
+
+  82% {
+    transform: scale(1.18) rotate(-6deg);
+    opacity: 0.95;
+  }
+
+  88% {
+    transform: scale(0.72) rotate(4deg);
+    opacity: 0.18;
   }
 }
 
@@ -2663,7 +2845,7 @@ a {
 }
 
 .journal-photo-caption {
-  font-family: 'Caveat', cursive;
+  font-family: 'Nothing You Could Do', cursive;
   font-size: 13px;
   font-weight: 600;
   text-align: center;
@@ -2681,6 +2863,10 @@ a {
   transition: transform 220ms ease, box-shadow 220ms ease, opacity 220ms ease;
   z-index: 1;
   box-shadow: 0 10px 28px rgba(86, 69, 35, 0.11);
+}
+
+.stamp-card.clickable {
+  cursor: pointer;
 }
 
 /* washi tape strip above each stamp */
@@ -2760,6 +2946,21 @@ a {
   aspect-ratio: 360 / 250;
 }
 
+.stamp-card-shell-btn {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: inherit;
+  color: inherit;
+  cursor: inherit;
+}
+
+.stamp-card-shell-btn:disabled {
+  cursor: default;
+}
+
 .stamp-card-outline {
   position: absolute;
   inset: 0;
@@ -2795,8 +2996,8 @@ a {
 .stamp-card-photo-window {
   position: absolute;
   top: 16.8%;
-  left: 11.7%;
-  width: 76.6%;
+  left: 13.6%;
+  width: 72.8%;
   height: 66.4%;
   overflow: hidden;
   border-radius: 24px;
@@ -2857,7 +3058,7 @@ a {
 }
 
 .stamp-card-name {
-  font-family: 'Caveat', cursive;
+  font-family: 'Nothing You Could Do', cursive;
   font-size: 17px;
   font-weight: 700;
   line-height: 1.05;
@@ -2883,7 +3084,7 @@ a {
 .stamp-card-monogram {
   position: relative;
   z-index: 1;
-  font-family: 'Caveat', cursive;
+  font-family: 'Nothing You Could Do', cursive;
   font-size: 28px;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -2992,6 +3193,161 @@ a {
   color: rgba(92, 80, 56, 0.56);
 }
 
+.stamp-review-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 18px;
+  background: rgba(27, 24, 18, 0.28);
+  backdrop-filter: blur(12px);
+}
+
+.stamp-review-card {
+  position: relative;
+  width: min(640px, 100%);
+  padding: 32px 28px 26px;
+  border-radius: 20px 22px 18px 24px;
+  background:
+    radial-gradient(circle at top left, rgba(254, 210, 119, 0.2), transparent 24%),
+    linear-gradient(180deg, rgba(255, 252, 243, 0.99), rgba(247, 241, 226, 0.98));
+  border: 1px solid rgba(173, 146, 95, 0.18);
+  box-shadow:
+    0 26px 70px rgba(53, 39, 15, 0.2),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.52);
+  transform: rotate(-0.45deg);
+  overflow: hidden;
+}
+
+.stamp-review-card::before,
+.stamp-review-card::after {
+  content: "";
+  position: absolute;
+  top: 14px;
+  width: 74px;
+  height: 18px;
+  border-radius: 2px;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0px,
+      transparent 12px,
+      rgba(255, 255, 255, 0.26) 12px,
+      rgba(255, 255, 255, 0.26) 13px
+    ),
+    rgba(246, 209, 150, 0.74);
+  box-shadow: 0 2px 5px rgba(120, 80, 20, 0.08);
+  opacity: 0.92;
+}
+
+.stamp-review-card::before {
+  left: 26px;
+  transform: rotate(-6deg);
+}
+
+.stamp-review-card::after {
+  right: 78px;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0px,
+      transparent 12px,
+      rgba(255, 255, 255, 0.24) 12px,
+      rgba(255, 255, 255, 0.24) 13px
+    ),
+    rgba(186, 217, 255, 0.7);
+  transform: rotate(5deg);
+}
+
+.stamp-review-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 3;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(92, 80, 56, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 251, 242, 0.9);
+  color: rgba(45, 56, 91, 0.92);
+  font-size: 17px;
+  font-weight: 700;
+  box-shadow: 0 6px 16px rgba(80, 60, 26, 0.08);
+  cursor: pointer;
+}
+
+.stamp-review-kicker {
+  position: relative;
+  z-index: 1;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: rgba(120, 93, 49, 0.58);
+  margin-bottom: 12px;
+}
+
+.stamp-review-title {
+  position: relative;
+  z-index: 1;
+  margin: 0 42px 10px 0;
+  font-family: 'Nothing You Could Do', cursive;
+  font-size: 38px;
+  font-weight: 700;
+  line-height: 1.02;
+  color: var(--navy);
+}
+
+.stamp-review-meta {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+  font-size: 12px;
+  font-weight: 800;
+  color: rgba(92, 80, 56, 0.64);
+}
+
+.stamp-review-meta span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(255, 249, 238, 0.88);
+  border: 1px solid rgba(150, 123, 75, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.stamp-review-body {
+  margin: 0;
+  padding: 18px 18px 16px;
+  border-radius: 16px;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 31px,
+      rgba(142, 116, 73, 0.09) 31px,
+      rgba(142, 116, 73, 0.09) 32px
+    ),
+    linear-gradient(180deg, rgba(255, 253, 246, 0.9), rgba(249, 243, 231, 0.84));
+  border: 1px solid rgba(161, 132, 84, 0.14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  white-space: pre-wrap;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 22px;
+  line-height: 1.45;
+  color: rgba(34, 39, 57, 0.9);
+  min-height: 168px;
+  max-height: min(46vh, 420px);
+  overflow: auto;
+}
+
 .magicfix-overlay {
   position: fixed;
   inset: 0;
@@ -3016,7 +3372,9 @@ a {
 }
 
 .magicfix-title {
+  font-family: var(--title-font);
   font-size: 28px;
+  font-weight: 800;
   line-height: 1.1;
   color: var(--navy);
   margin-bottom: 8px;
@@ -3071,6 +3429,38 @@ a {
   line-height: 1.5;
   color: rgba(30, 36, 58, 0.56);
   margin-bottom: 10px;
+}
+
+.magicfix-title-wrap {
+  margin-bottom: 12px;
+}
+
+.magicfix-title-lbl {
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(30, 36, 58, 0.42);
+  margin-bottom: 8px;
+}
+
+.magicfix-title-input {
+  width: 100%;
+  border: 1px solid rgba(28, 41, 82, 0.14);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.94);
+  padding: 12px 14px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--navy);
+}
+
+.magicfix-title-input:focus {
+  outline: none;
+  border-color: rgba(62, 90, 255, 0.42);
+  box-shadow: 0 0 0 3px rgba(62, 90, 255, 0.12);
 }
 
 .magicfix-edit {
@@ -3294,93 +3684,6 @@ a {
   padding: 5px 11px;
   border-radius: 20px;
   border: 1px solid rgba(30, 36, 58, 0.12);
-}
-
-.my-impact-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-bottom: 14px;
-}
-
-.impact-stat-card {
-  padding: 16px;
-  text-align: center;
-}
-
-.impact-stat-card.blue {
-  border-top: 3px solid var(--blue);
-}
-
-.impact-stat-card.green {
-  border-top: 3px solid var(--green);
-}
-
-.impact-stat-num {
-  font-size: 32px;
-  font-weight: 900;
-  color: var(--navy);
-  line-height: 1;
-}
-
-.impact-stat-lbl {
-  font-size: 11px;
-  color: var(--hint);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin-top: 4px;
-}
-
-.quest-card {
-  background: var(--off);
-  border: 1.5px solid var(--border);
-  border-radius: var(--r-lg);
-  padding: 16px 18px;
-  margin-bottom: 12px;
-}
-
-.quest-card-top {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-
-.quest-title {
-  font-size: 13px;
-  font-weight: 900;
-  color: var(--navy);
-}
-
-.quest-desc {
-  font-size: 12px;
-  color: var(--sub);
-  line-height: 1.6;
-}
-
-.ans-item {
-  display: flex;
-  gap: 9px;
-  padding: 9px 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.ans-item:last-child {
-  border-bottom: none;
-}
-
-.ans-ck {
-  color: var(--green);
-  flex-shrink: 0;
-  margin-top: 2px;
-  font-weight: 900;
-}
-
-.ans-a {
-  font-size: 12px;
-  color: var(--text);
-  line-height: 1.55;
 }
 
 @keyframes stampediaTurn {
@@ -3613,6 +3916,12 @@ a {
     flex-direction: column;
   }
 
+  .demo-brand-footer,
+  .app-footer-inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .demo-profile-grid {
     grid-template-columns: 1fr;
   }
@@ -3668,6 +3977,24 @@ a {
     padding: 28px 14px;
   }
 
+  .brand-logo {
+    padding: 0;
+  }
+
+  .brand-image {
+    width: 92px;
+    max-width: min(92px, 30vw);
+  }
+
+  .brand-atlas-image {
+    width: 104px;
+    max-width: min(104px, 34vw);
+  }
+
+  .brand-by {
+    font-size: 14px;
+  }
+
   .demo-profile-band {
     grid-template-columns: 1fr;
   }
@@ -3682,8 +4009,7 @@ a {
   }
 
   .prop-grid,
-  .mode-grid,
-  .my-impact-grid {
+  .mode-grid {
     grid-template-columns: 1fr;
   }
 

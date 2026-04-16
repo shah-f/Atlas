@@ -272,6 +272,7 @@ export function resetDemoStore() {
 export function markDemoStayReviewed(input: {
   customerId: string;
   stayId: string;
+  reviewTitle: string | null;
   reviewText: string;
   polishedText: string | null;
   answerPreviews: AnswerPreview[];
@@ -298,6 +299,7 @@ export function markDemoStayReviewed(input: {
     stayId: input.stayId,
     propertyId: stay.propertyId,
     submittedAt: new Date().toISOString(),
+    reviewTitle: input.reviewTitle,
     reviewText: input.reviewText,
     polishedText: input.polishedText,
     answerPreviews: input.answerPreviews,

@@ -12,6 +12,7 @@ import type {
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const OPENAI_MODEL = process.env.OPENAI_MODEL ?? "gpt-4.1-nano";
+const OPENAI_POLISH_MODEL = process.env.OPENAI_POLISH_MODEL ?? "gpt-4.1-mini";
 const OPENAI_EMBEDDING_MODEL = process.env.OPENAI_RAG_EMBEDDING_MODEL ?? "text-embedding-3-small";
 
 function scoreGap(gap: CandidateGap, draft: ReviewDraft) {
@@ -73,6 +74,48 @@ function topHeuristicCandidates(
 
 function normalizeAnswer(rawAnswer: string) {
   return rawAnswer.replace(/\s+/g, " ").trim();
+}
+
+function parseLooseJsonObject(rawText: string) {
+  try {
+    return JSON.parse(rawText) as Record<string, unknown>;
+  } catch {
+    const firstBrace = rawText.indexOf("{");
+    const lastBrace = rawText.lastIndexOf("}");
+    if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(rawText.slice(firstBrace, lastBrace + 1)) as Record<string, unknown>;
+    } catch {
+      return null;
+    }
+  }
+}
+
+function extractResponseText(payload: {
+  output_text?: string;
+  output?: Array<{
+    content?: Array<{
+      type?: string;
+      text?: string;
+    }>;
+  }>;
+}) {
+  if (typeof payload.output_text === "string" && payload.output_text.trim()) {
+    return payload.output_text;
+  }
+
+  for (const item of payload.output ?? []) {
+    for (const content of item.content ?? []) {
+      if (content.type === "output_text" && typeof content.text === "string" && content.text.trim()) {
+        return content.text;
+      }
+    }
+  }
+
+  return null;
 }
 
 function buildAnswerPreview(question: SessionQuestion, rawAnswer: string): AnswerPreview {
@@ -248,10 +291,29 @@ async function generateGroundedQuestion(candidateContexts: ReturnType<typeof bui
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      model: OPENAI_MODEL,
+      model: OPENAI_POLISH_MODEL,
+      temperature: 0.2,
       text: {
         format: {
-          type: "json_object"
+          type: "json_schema",
+          name: "review_enhancement",
+          strict: true,
+          schema: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+              polishedText: {
+                type: "string"
+              },
+              changed: {
+                type: "boolean"
+              },
+              generatedTitle: {
+                type: "string"
+              }
+            },
+            required: ["polishedText", "changed", "generatedTitle"]
+          }
         }
       },
       input: [
@@ -290,13 +352,22 @@ async function generateGroundedQuestion(candidateContexts: ReturnType<typeof bui
     return null;
   }
 
-  const payload = (await response.json()) as { output_text?: string };
-  if (!payload.output_text) {
+  const payload = (await response.json()) as {
+    output_text?: string;
+    output?: Array<{
+      content?: Array<{
+        type?: string;
+        text?: string;
+      }>;
+    }>;
+  };
+  const outputText = extractResponseText(payload);
+  if (!outputText) {
     return null;
   }
 
   try {
-    return JSON.parse(payload.output_text) as {
+    return JSON.parse(outputText) as {
       attributeKey: string;
       prompt: string;
       rationale: string;
@@ -426,7 +497,8 @@ export async function polishReviewText(reviewText: string, locale = "en-US", lan
   if (!trimmed) {
     return {
       polishedText: reviewText,
-      changed: false
+      changed: false,
+      generatedTitle: null
     };
   }
 
@@ -457,16 +529,24 @@ export async function polishReviewText(reviewText: string, locale = "en-US", lan
                 "Return JSON only.",
                 "You are a multilingual review grammar fixer.",
                 "Keep the review in the same language as the original user text.",
+                "You are improving a hotel review for grammar only, not rewriting it.",
                 "Only fix grammar, capitalization, punctuation, spacing, and obvious typo-level spelling issues.",
+                "Also generate one short review title based only on the review content.",
+                "The title must stay in the same language as the review and should usually be 2 to 6 words.",
+                "Keep the title specific and natural, not clickbait, not overly cheerful, and not generic.",
                 "Correct only obvious contextual spelling mistakes, missing apostrophes in common contractions, and clear comma mistakes.",
                 "Actively fix missing sentence-ending punctuation and obvious punctuation spacing when the intended sentence is clear.",
                 "You may make a few more obvious corrections when the intended wording is clear, including repeated-word cleanup and very simple punctuation fixes.",
                 "When a sentence is an obvious run-on, add the most natural comma or period to separate the clauses instead of leaving them joined.",
                 "Fix obvious review shorthand when the intended word is clear, such as rlly to really or ekpt to kept.",
+                "Fix obvious misspellings when the intended word is clear, such as poeple to people and hte to the.",
+                "Capitalize the beginning of sentences and proper standalone I in English when needed.",
+                "If the review clearly needs an ending period, question mark, or exclamation point, add it.",
                 "Prefer under-correcting to over-correcting. If a possible change is ambiguous, leave the user's wording alone.",
                 "Do not add new facts, do not rewrite for style, do not shorten heavily, and do not intensify sentiment.",
                 "Preserve the traveler's meaning and tone.",
-                'Return keys "polishedText" and "changed".'
+                'Return keys "polishedText", "changed", and "generatedTitle".',
+                'If you make no text edits, still return the original review as "polishedText".'
               ].join(" ")
             }
           ]
@@ -492,20 +572,36 @@ export async function polishReviewText(reviewText: string, locale = "en-US", lan
     throw new Error(`Review polish request failed with status ${response.status}.`);
   }
 
-  const payload = (await response.json()) as { output_text?: string };
-  if (!payload.output_text) {
+  const payload = (await response.json()) as {
+    output_text?: string;
+    output?: Array<{
+      content?: Array<{
+        type?: string;
+        text?: string;
+      }>;
+    }>;
+  };
+  const outputText = extractResponseText(payload);
+  if (!outputText) {
     throw new Error("No review polish output returned.");
   }
 
-  const parsed = JSON.parse(payload.output_text) as {
-    polishedText?: string;
-    changed?: boolean;
-  };
+  const parsed = parseLooseJsonObject(outputText);
+  if (!parsed) {
+    return {
+      polishedText: trimmed,
+      changed: false,
+      generatedTitle: null
+    };
+  }
 
-  const polishedText = normalizeAnswer(parsed.polishedText ?? reviewText);
+  const polishedText = normalizeAnswer(typeof parsed.polishedText === "string" ? parsed.polishedText : reviewText);
+  const generatedTitle = normalizeAnswer(typeof parsed.generatedTitle === "string" ? parsed.generatedTitle : "") || null;
+  const changed = typeof parsed.changed === "boolean" ? parsed.changed : polishedText !== trimmed;
 
   return {
     polishedText,
-    changed: (Boolean(parsed.changed) || polishedText !== trimmed) && polishedText !== trimmed
+    changed: changed && polishedText !== trimmed,
+    generatedTitle
   };
 }

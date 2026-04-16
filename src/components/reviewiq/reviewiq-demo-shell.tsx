@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ReviewIqClient } from "@/components/reviewiq/reviewiq-client";
 import type { DemoHydratedCustomer } from "@/lib/reviewiq/types";
 
@@ -17,6 +17,19 @@ export function ReviewIqDemoShell({ customers }: ReviewIqDemoShellProps) {
     () => customerProfiles.find((customer) => customer.id === activeCustomerId) ?? null,
     [activeCustomerId, customerProfiles]
   );
+
+  useEffect(() => {
+    if (!activeCustomerId || typeof window === "undefined") {
+      return;
+    }
+
+    window.requestAnimationFrame(() => {
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+      });
+    });
+  }, [activeCustomerId]);
 
   function handleCustomerUpdate(updatedCustomer: DemoHydratedCustomer) {
     setCustomerProfiles((current) =>
@@ -51,8 +64,8 @@ export function ReviewIqDemoShell({ customers }: ReviewIqDemoShellProps) {
         <div className="demo-picker-card">
           <div className="demo-picker-head">
             <div>
-              <p className="pg-eye">Demo Profiles</p>
-              <h1 className="pg-h1">Choose a seeded Expedia customer</h1>
+              <img alt="Expedia logo" className="demo-head-logo" src="/ex_logo.svg" />
+              <h1 className="pg-h1">Choose an Atlas demo customer</h1>
             </div>
             <button className="demo-reset-btn" disabled={resetting} onClick={() => handleResetDemoData().catch(() => undefined)} type="button">
               {resetting ? "Resetting..." : "Reset All Demo Data"}
@@ -86,7 +99,7 @@ export function ReviewIqDemoShell({ customers }: ReviewIqDemoShellProps) {
                       <strong>{trip?.title ?? "Recent trip"}</strong>
                     </div>
                     <div>
-                      <span>Stampedia</span>
+                      <span>Atlas Capsule</span>
                       <strong>
                         {reviewedCount}/{customer.stays.length} stamped
                       </strong>
@@ -105,6 +118,11 @@ export function ReviewIqDemoShell({ customers }: ReviewIqDemoShellProps) {
                 </button>
               );
             })}
+          </div>
+
+          <div className="demo-brand-footer">
+            <img alt="Atlas logo" className="atlas-signature atlas-signature-demo" src="/atlas_logo.png" />
+            <div className="demo-brand-copy">A review capture experience built for Expedia travel insights.</div>
           </div>
         </div>
       </div>

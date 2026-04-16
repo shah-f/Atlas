@@ -20,6 +20,30 @@ function fallbackLabel(index: number) {
   return "On-site detail";
 }
 
+function extractResponseText(payload: {
+  output_text?: string;
+  output?: Array<{
+    content?: Array<{
+      type?: string;
+      text?: string;
+    }>;
+  }>;
+}) {
+  if (typeof payload.output_text === "string" && payload.output_text.trim()) {
+    return payload.output_text;
+  }
+
+  for (const item of payload.output ?? []) {
+    for (const content of item.content ?? []) {
+      if (content.type === "output_text" && typeof content.text === "string" && content.text.trim()) {
+        return content.text;
+      }
+    }
+  }
+
+  return null;
+}
+
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as {
@@ -92,9 +116,16 @@ export async function POST(request: Request) {
 
     const payload = (await response.json()) as {
       output_text?: string;
+      output?: Array<{
+        content?: Array<{
+          type?: string;
+          text?: string;
+        }>;
+      }>;
     };
 
-    const parsed = payload.output_text ? JSON.parse(payload.output_text) : null;
+    const outputText = extractResponseText(payload);
+    const parsed = outputText ? JSON.parse(outputText) : null;
     const labels = Array.isArray(parsed?.labels)
       ? parsed.labels
           .filter((item: { id?: string; label?: string }) => item?.id && item?.label)

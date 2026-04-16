@@ -165,6 +165,7 @@ export type DemoReviewSubmission = {
   stayId: string;
   propertyId: string;
   submittedAt: string;
+  reviewTitle?: string | null;
   reviewText: string;
   polishedText: string | null;
   answerPreviews: AnswerPreview[];

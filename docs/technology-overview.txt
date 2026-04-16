@@ -1,0 +1,525 @@
+Atlas Technology Overview
+Generated from the current repository state on 2026-04-15.
+
+1. Project Summary
+
+Atlas is a Next.js + React + TypeScript demo application for adaptive hotel review capture. It combines:
+
+- a frontend review flow
+- local demo-state persistence
+- an offline CSV ingestion pipeline
+- heuristic gap scoring over hotel-review data
+- OpenAI-powered follow-up generation, review enhancement, title generation, embeddings, and optional photo labeling
+
+The app is built as a demo product rather than a production SaaS stack. It does not currently use a traditional database or authentication layer. Instead, it uses generated JSON artifacts plus a local JSON demo store.
+
+2. Core Technologies Used
+
+2.1 Frontend application stack
+
+- Next.js
+  Functionality:
+  - App Router page structure under `src/app`
+  - server-rendered home page
+  - API routes under `src/app/api`
+  - production builds and local dev server
+
+- React
+  Functionality:
+  - client-side UI state and interactivity
+  - step-by-step review flow
+  - adaptive prompts
+  - popup/modal behavior
+  - Stampedia animations and interactions
+
+- React DOM
+  Functionality:
+  - browser rendering for the React app
+
+- TypeScript
+  Functionality:
+  - static typing across app code, API routes, demo models, generated data structures, and browser speech typings
+
+- Global CSS
+  Functionality:
+  - full styling system for the product
+  - gradients, layouts, cards, stepper, modal styling, animations, doodles, and Stampedia visuals
+
+- Google Fonts
+  Fonts currently referenced in `src/app/layout.tsx`:
+  - Nunito
+  - Nothing You Could Do
+  - Patrick Hand
+  Functionality:
+  - page titles and headings
+  - handwritten scrapbook / journal styling in Stampedia
+
+2.2 Browser and native web APIs
+
+- Fetch API
+  Functionality:
+  - calls internal Next.js API routes
+  - calls OpenAI APIs from server routes and server-side library code
+
+- Web Speech API
+  Functionality:
+  - browser-native speech recognition for dictating reviews and follow-up answers
+  - typings shim provided in `src/types/web-speech.d.ts`
+
+- Speech Synthesis API
+  Functionality:
+  - spoken prompts and voice-first review flow guidance
+
+- File API / drag-and-drop / object URLs / data URLs
+  Functionality:
+  - photo uploads
+  - drag-and-drop image handling
+  - local preview rendering before submission
+  - conversion to data URLs for persistence / model classification
+
+- SVG
+  Functionality:
+  - brand logo rendering
+  - custom iconography
+  - stamp outlines and decorative visual elements
+
+2.3 Server-side and local runtime technologies
+
+- Node.js built-ins
+  Modules used:
+  - `fs`
+  - `fs/promises`
+  - `path`
+  - `crypto`
+  Functionality:
+  - reading generated catalog files
+  - reading and writing the demo JSON store
+  - local artifact generation
+  - embedding cache hashing
+  - UUID generation for questions and session objects
+
+- JSON file persistence
+  Files used:
+  - `data/demo/demo-db.json`
+  Functionality:
+  - demo customer state
+  - reviewed stays
+  - saved submissions
+  - generated title / polished text / answer previews / uploaded photo data
+
+2.4 Data ingestion and dataset processing
+
+- `csv-parse/sync`
+  Functionality:
+  - parses the raw Expedia CSV files during ingestion
+
+- Custom parsing utilities
+  Files:
+  - `scripts/lib/parse.mjs`
+  - `scripts/lib/text.mjs`
+  Functionality:
+  - CSV parsing
+  - ratings parsing
+  - date parsing
+  - HTML stripping
+  - tokenization
+  - summary creation
+  - sentiment heuristics
+
+- Custom catalog builder
+  File:
+  - `scripts/lib/catalog-builder.mjs`
+  Functionality:
+  - derives normalized property summaries
+  - scores candidate review gaps
+  - computes staleness, contradiction, missing coverage, confidence, and rationale
+  - builds review stats and evidence snippets
+  - builds the base RAG chunk set
+
+2.5 OpenAI technologies
+
+- OpenAI Responses API
+  Functionality:
+  - adaptive follow-up question phrasing / selection
+  - grammar enhancement
+  - generated review title
+  - optional photo classification labels
+
+- OpenAI Embeddings API
+  Functionality:
+  - offline semantic embeddings for RAG chunks
+  - runtime query embeddings for evidence retrieval
+
+- Models currently referenced
+  - `gpt-4.1-nano`
+    Functionality:
+    - review polish / enhancer path by default
+  - `gpt-4.1-mini`
+    Functionality:
+    - optional photo classification
+    - polish model override is supported through env vars
+  - `text-embedding-3-small`
+    Functionality:
+    - offline and runtime embedding generation for RAG
+
+- Important implementation note
+  OpenAI is called through raw `fetch(...)` requests rather than through the official OpenAI SDK package.
+
+2.6 UI development and testing tooling
+
+- Storybook
+  Packages:
+  - `storybook`
+  - `@storybook/nextjs-vite`
+  - `@storybook/addon-a11y`
+  - `@storybook/addon-docs`
+  - `@storybook/addon-vitest`
+  - `@chromatic-com/storybook`
+  Functionality:
+  - configured for component/story development and documentation
+  - a11y and docs addon support
+  - Chromatic integration package installed
+
+- Vitest
+  Packages:
+  - `vitest`
+  - `@vitest/coverage-v8`
+  - `@vitest/browser-playwright`
+  Functionality:
+  - test runner and browser test support are configured in the repo
+
+- Playwright
+  Functionality:
+  - browser automation support for Vitest browser testing
+
+- Vite
+  Functionality:
+  - used via Storybook / Vitest tooling stack
+
+3. Data and Content Assets
+
+3.1 Raw input data
+
+- `data/raw/Description_PROC.csv`
+  Functionality:
+  - source hotel/property dataset
+
+- `data/raw/Reviews_PROC.csv`
+  Functionality:
+  - source review dataset
+
+3.2 Generated artifacts
+
+- `data/generated/catalog.json`
+  Functionality:
+  - normalized property catalog
+  - candidate gap metadata
+  - question templates
+  - evidence and review stats
+
+- `data/generated/rag-index.json`
+  Functionality:
+  - semantic chunk index for property-specific evidence retrieval
+
+- `data/generated/embedding-cache.json`
+  Functionality:
+  - avoids recomputing embeddings across ingests
+
+- `data/generated/rag-diagnostics.json`
+  Functionality:
+  - simple retrieval diagnostics for inspecting chunk relevance
+
+- `data/generated/data-quality.json`
+  Functionality:
+  - summary stats for the generated dataset and review coverage
+
+3.3 Local visual assets
+
+- `public/reviewiq-hotels/*`
+  Functionality:
+  - locally served hotel and reveal images
+  - no runtime dependency on remote hotel-image hosts
+
+- `public/ex_logo.svg`
+  Functionality:
+  - current logo / wordmark asset used in the app header
+
+4. Application Architecture
+
+4.1 Offline phase
+
+The offline phase is driven by `npm run ingest`.
+
+Flow:
+- load `.env.local`
+- parse raw CSVs
+- normalize property and review records
+- compute candidate gaps
+- build evidence snippets and rationales
+- build RAG chunks
+- create embeddings and cache them
+- write generated artifacts into `data/generated`
+
+Key files:
+- `scripts/ingest-data.mjs`
+- `scripts/lib/parse.mjs`
+- `scripts/lib/catalog-builder.mjs`
+- `scripts/lib/attribute-catalog.mjs`
+- `scripts/lib/text.mjs`
+
+4.2 Runtime phase
+
+The runtime app loads the generated JSON catalog and serves a guided review experience.
+
+Flow:
+- load seeded demo customers
+- hydrate stays with property data from the generated catalog
+- let the user review a stay
+- use heuristics + optional OpenAI/RAG to determine follow-up questions
+- let the user answer and preview structured updates
+- enhance the review with grammar fixes and a generated title
+- persist demo progress in the local JSON store
+
+Key files:
+- `src/app/page.tsx`
+- `src/components/reviewiq/reviewiq-demo-shell.tsx`
+- `src/components/reviewiq/reviewiq-client.tsx`
+- `src/components/reviewiq/stampedia-journal.tsx`
+- `src/lib/reviewiq/runtime-data.ts`
+- `src/lib/reviewiq/demo-store.ts`
+- `src/lib/reviewiq/gap-coverage.ts`
+- `src/lib/reviewiq/session.ts`
+
+5. API Surface
+
+5.1 Demo-data API routes
+
+- `POST /api/demo/reset`
+  Functionality:
+  - resets the seeded demo customer profiles
+  - clears local demo review state
+
+- `POST /api/demo/review`
+  Functionality:
+  - saves a completed review
+  - persists title, polished text, answer previews, and uploaded photo data
+  - marks the stay as reviewed
+
+- `POST /api/demo/trip`
+  Functionality:
+  - renames a trip inside Stampedia
+
+5.2 Review intelligence API routes
+
+- `POST /api/session/start`
+  Functionality:
+  - starts the adaptive follow-up session
+  - returns up to two follow-up questions
+
+- `POST /api/session/answer`
+  Functionality:
+  - previews a structured candidate fact update from a user answer
+
+- `POST /api/session/polish`
+  Functionality:
+  - enhances review grammar/spelling/punctuation
+  - generates a short review title
+
+- `POST /api/photos/classify`
+  Functionality:
+  - optionally labels uploaded hotel photos with concise hospitality labels
+
+6. Feature Inventory
+
+6.1 Demo and navigation features
+
+- Seeded demo customer selection
+- Multiple seeded travelers with distinct trips and stays
+- Reset-all-demo-data control
+- Back navigation between major review steps
+- Dynamic page flow using a five-step stepper
+
+6.2 Review flow features
+
+- Choose-a-stay review entry point
+- Typed review mode
+- Voice review mode
+- Five-star overall impression selector
+- Freeform review textarea
+- Word-count feedback
+- Coverage meter / detail progress feedback
+- Back / next / submit flow
+
+6.3 Adaptive review guidance features
+
+- Inline Atlas prompt / nudge box while writing
+- Prompt suggestions driven by missing or stale property topics
+- Prompt rotation as the user covers a topic
+- Draft-aware gap detection using clause-level heuristics
+- Prevention of duplicate follow-up questions for already-covered topics
+
+6.4 Follow-up question features
+
+- Adaptive follow-up page
+- Up to two follow-up questions
+- Questions based on missing, stale, or contradictory facts
+- Follow-up answer capture
+- Skip option
+- Local preview of what each answer would update
+
+6.5 AI review enhancement features
+
+- Grammar, punctuation, capitalization, and obvious spelling enhancement
+- OpenAI-powered title generation
+- Editable enhancer modal
+- Accept or decline flow
+- Typing animation for the enhanced review text
+- Review title editing directly in the enhancer popup
+
+6.6 Voice features
+
+- Browser speech recognition for review dictation
+- Voice capture for follow-up answers
+- Speech synthesis for spoken prompts
+- Voice-first interaction option in the mode-selection screen
+
+6.7 Media features
+
+- Drag-and-drop photo upload
+- Multi-photo preview grid
+- Removal of uploaded photos before submission
+- Optional server-side photo classification endpoint
+- Local hotel image assets for the demo stays
+- Separate reveal images for the property puzzle experience
+
+6.8 Review outcome and profile features
+
+- Reveal-the-property puzzle that uncovers one image block by block
+- Traveler taste profile / persona summary
+- Segment breakdown bars for traveler preference profile
+- Impact cards and review summary cards
+- Saved review evidence and structured answer previews
+
+6.9 Stampedia features
+
+- Journal-style reviewed-stays experience
+- Trip-based stamp grouping
+- Editable trip title
+- Stamp cards with local hotel imagery
+- Trip navigation arrows and page dots
+- Decorative scrapbook visuals and doodles
+- Animated air-route accent
+- Sparkle accents
+- Uploaded traveler photo displayed in the journal when available
+
+6.10 Persistence and demo-state features
+
+- Local JSON demo-store persistence
+- Reviewed stays remain saved between page refreshes
+- Title, enhanced review, answer previews, and uploaded photo data are persisted
+- Reset route restores seeded state
+
+6.11 Multilingual and locale features
+
+- Language selector in the app header
+- Locale-aware polish requests
+- Language-aware speech configuration
+- Review enhancement prompt instructs OpenAI to stay in the review language
+
+7. Core Logic Systems
+
+7.1 Gap scoring engine
+
+Implemented in:
+- `src/lib/reviewiq/gap-coverage.ts`
+- `scripts/lib/catalog-builder.mjs`
+
+Functionality:
+- scores property attributes by importance
+- checks whether the draft already covers them
+- identifies stale, contradictory, or weakly covered facts
+- determines which questions are still worth asking
+
+7.2 Custom RAG system
+
+Implemented in:
+- `scripts/ingest-data.mjs`
+- `src/lib/reviewiq/session.ts`
+
+Functionality:
+- embeds offline property/review chunks
+- embeds runtime gap queries
+- retrieves semantically relevant evidence
+- uses that evidence to ground the adaptive follow-up question
+
+7.3 Demo-store hydration
+
+Implemented in:
+- `src/lib/reviewiq/demo-store.ts`
+- `src/lib/reviewiq/runtime-data.ts`
+
+Functionality:
+- loads generated property summaries
+- hydrates seeded stays with current property metadata
+- updates stale-focus labels from the latest catalog data
+
+8. Important Product Constraints
+
+- No production database yet
+- No authentication or account system yet
+- Demo persistence is file-based, not multi-user safe
+- OpenAI enhancer currently expects an API key
+- Storybook/Vitest/Playwright tooling is installed and configured, but the current repo is primarily demo-app code rather than a large test suite
+
+9. Recommended One-Line Description
+
+Atlas is a Next.js demo product that ingests hotel and review CSVs, computes stale or missing property facts, guides travelers through an adaptive review flow, and uses OpenAI plus local heuristics to turn fresh traveler feedback into structured, review-driven intelligence.
+
+10. Most Important Files by Responsibility
+
+- `src/components/reviewiq/reviewiq-client.tsx`
+  Main review flow UI, enhancer modal, prompts, photo upload, follow-up flow, and done screen
+
+- `src/components/reviewiq/stampedia-journal.tsx`
+  Stampedia journal UI, stamps, trip navigation, and decorative motion
+
+- `src/lib/reviewiq/session.ts`
+  Follow-up question selection, RAG retrieval, answer preview logic, and OpenAI review enhancement
+
+- `src/lib/reviewiq/gap-coverage.ts`
+  Draft coverage heuristics and gap completion detection
+
+- `src/lib/reviewiq/demo-store.ts`
+  Seeded demo profiles and persistent local review storage
+
+- `scripts/ingest-data.mjs`
+  Offline pipeline that generates the property catalog and semantic index
+
+- `scripts/lib/catalog-builder.mjs`
+  Candidate-gap scoring and catalog generation logic
+
+- `src/app/globals.css`
+  Entire visual system and interaction styling
+
+11. Script Reference
+
+- `npm run dev`
+  Starts the local Next.js dev server
+
+- `npm run build`
+  Builds the Next.js application for production
+
+- `npm run start`
+  Starts the built production server
+
+- `npm run ingest`
+  Generates the catalog, embeddings, diagnostics, and RAG artifacts from the raw CSVs
+
+- `npm run check:data`
+  Prints a data-quality and RAG summary from generated artifacts
+
+- `npm run storybook`
+  Starts Storybook
+
+- `npm run build-storybook`
+  Builds the Storybook site

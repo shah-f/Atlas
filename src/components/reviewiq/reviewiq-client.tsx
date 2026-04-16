@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent, DragEvent } from "react";
 import { StampediaJournal, type StampediaTrip } from "@/components/reviewiq/stampedia-journal";
 import { getRemainingGaps } from "@/lib/reviewiq/gap-coverage";
+import { formatUiCopy, getMagicFixCopy, getReviewIqUiCopy, type ReviewIqUiCopy } from "@/lib/reviewiq/ui-copy";
 import type { AnswerPreview, CandidateGap, DemoHydratedCustomer, DemoHydratedStay, PropertySummary, SessionQuestion } from "@/lib/reviewiq/types";
 
 type ReviewIqClientProps = {
@@ -33,14 +34,6 @@ type QuestionInputState = {
   details: string;
 };
 
-type MagicFixCopy = {
-  title: string;
-  body: string;
-  accept: string;
-  keep: string;
-  loading: string;
-};
-
 type TasteProfile = {
   label: string;
   archetype: string;
@@ -68,19 +61,32 @@ type PropertyVisual = {
 
 const LANGUAGES: LanguageOption[] = [
   { code: "en", label: "English", locale: "en-US", dir: "ltr" },
-  { code: "es", label: "Espanol", locale: "es-ES", dir: "ltr" },
-  { code: "fr", label: "Francais", locale: "fr-FR", dir: "ltr" },
+  { code: "es", label: "Español", locale: "es-ES", dir: "ltr" },
+  { code: "fr", label: "Français", locale: "fr-FR", dir: "ltr" },
   { code: "de", label: "Deutsch", locale: "de-DE", dir: "ltr" },
   { code: "it", label: "Italiano", locale: "it-IT", dir: "ltr" },
-  { code: "pt", label: "Portugues", locale: "pt-BR", dir: "ltr" },
-  { code: "ja", label: "Japanese", locale: "ja-JP", dir: "ltr" },
-  { code: "zh", label: "Chinese", locale: "zh-CN", dir: "ltr" },
-  { code: "ar", label: "Arabic", locale: "ar-SA", dir: "rtl" },
-  { code: "hi", label: "Hindi", locale: "hi-IN", dir: "ltr" },
-  { code: "nl", label: "Dutch", locale: "nl-NL", dir: "ltr" }
+  { code: "pt", label: "Português", locale: "pt-BR", dir: "ltr" },
+  { code: "ja", label: "日本語", locale: "ja-JP", dir: "ltr" },
+  { code: "zh", label: "中文", locale: "zh-CN", dir: "ltr" },
+  { code: "ar", label: "العربية", locale: "ar-SA", dir: "rtl" },
+  { code: "hi", label: "हिन्दी", locale: "hi-IN", dir: "ltr" },
+  { code: "nl", label: "Nederlands", locale: "nl-NL", dir: "ltr" }
 ];
 
 const STAR_LABELS = ["", "Terrible", "Poor", "Okay", "Good", "Excellent"];
+const STAR_LABELS_BY_LANGUAGE: Record<string, string[]> = {
+  en: STAR_LABELS,
+  es: ["", "Terrible", "Mala", "Aceptable", "Buena", "Excelente"],
+  fr: ["", "Terrible", "Mauvais", "Correct", "Bon", "Excellent"],
+  de: ["", "Schrecklich", "Schlecht", "Okay", "Gut", "Ausgezeichnet"],
+  it: ["", "Terribile", "Scarso", "Discreto", "Buono", "Eccellente"],
+  pt: ["", "Terrível", "Ruim", "Ok", "Bom", "Excelente"],
+  ja: ["", "ひどい", "いまひとつ", "普通", "良い", "素晴らしい"],
+  zh: ["", "很差", "较差", "一般", "不错", "非常好"],
+  ar: ["", "سيئ جدًا", "سيئ", "مقبول", "جيد", "ممتاز"],
+  hi: ["", "बहुत खराब", "खराब", "ठीक", "अच्छा", "उत्कृष्ट"],
+  nl: ["", "Vreselijk", "Slecht", "Oké", "Goed", "Uitstekend"]
+};
 const INLINE_PROMPT_LIMIT = 2;
 
 const PROPERTY_PHOTOS: Record<string, PropertyPhoto> = {
@@ -149,86 +155,6 @@ const REVIEW_KEYWORDS = [
   "quiet"
 ];
 
-const MAGIC_FIX_COPY_BY_LANGUAGE: Record<string, MagicFixCopy> = {
-  en: {
-    title: "We enhanced your review.",
-    body: "We only fixed grammar, capitalization, and punctuation without changing what you meant.",
-    accept: "Accept",
-    keep: "Decline",
-    loading: "OpenAI is enhancing your review..."
-  },
-  es: {
-    title: "Tus arreglos magicos ya estan listos",
-    body: "Arreglamos la gramatica y la puntuacion sin cambiar lo que quisiste decir. Quieres enviar la version pulida?",
-    accept: "Aceptar arreglos magicos",
-    keep: "Mantener mi version",
-    loading: "Puliendo tu resena..."
-  },
-  fr: {
-    title: "Les corrections magiques sont pretes",
-    body: "Nous avons corrige la grammaire et la ponctuation sans changer ton sens. Veux-tu envoyer la version corrigee ?",
-    accept: "Accepter les corrections magiques",
-    keep: "Garder ma version",
-    loading: "Polissage de votre avis..."
-  },
-  de: {
-    title: "Deine magischen Korrekturen sind fertig",
-    body: "Wir haben Grammatik und Zeichensetzung verbessert, ohne deine Bedeutung zu andern. Mochtest du die uberarbeitete Version senden?",
-    accept: "Magische Korrekturen akzeptieren",
-    keep: "Meine Version behalten",
-    loading: "Deine Bewertung wird uberarbeitet..."
-  },
-  it: {
-    title: "Le correzioni magiche sono pronte",
-    body: "Abbiamo sistemato grammatica e punteggiatura senza cambiare il tuo significato. Vuoi inviare la versione ripulita?",
-    accept: "Accetta correzioni magiche",
-    keep: "Tieni la mia versione",
-    loading: "Sto migliorando la tua recensione..."
-  },
-  pt: {
-    title: "Seus ajustes magicos estao prontos",
-    body: "Corrigimos gramatica e pontuacao sem mudar o que voce quis dizer. Quer enviar a versao revisada?",
-    accept: "Aceitar ajustes magicos",
-    keep: "Manter minha versao",
-    loading: "Aprimorando sua avaliacao..."
-  },
-  ja: {
-    title: "Magic fixes ga dekimashita",
-    body: "Imi wa sono mama de bunpo to kutoten dake o totonoemashita. Migaki naoshita ban de teishutsu shimasu ka?",
-    accept: "Magic fixes o tsukau",
-    keep: "Genbun no mama",
-    loading: "Review o migaki naoshiteimasu..."
-  },
-  zh: {
-    title: "Mo fa xiu zheng yi zhun bei hao",
-    body: "Wo men zai bu gai bian yuan yi de qing kuang xia xiu zheng le yu fa he biao dian. Yao ti jiao run se hou de ban ben ma?",
-    accept: "Jie shou mo fa xiu zheng",
-    keep: "Bao liu wo de ban ben",
-    loading: "Zheng zai run se ni de ping lun..."
-  },
-  ar: {
-    title: "al islahat al sihriya جاهزة",
-    body: "قمنا بتحسين القواعد وعلامات الترقيم من دون تغيير المعنى. هل تريد ارسال النسخة المنقحة؟",
-    accept: "اقبل الاصلاحات السحرية",
-    keep: "احتفظ بنسختي",
-    loading: "نجري تنقيحا لمراجعتك..."
-  },
-  hi: {
-    title: "Magic fixes taiyar hain",
-    body: "Humne meaning badle bina grammar aur punctuation saaf ki hai. Kya aap polished version submit karna chahenge?",
-    accept: "Magic fixes svikar karein",
-    keep: "Meri version rakhen",
-    loading: "Aapki review ko polish kiya ja raha hai..."
-  },
-  nl: {
-    title: "Je magic fixes staan klaar",
-    body: "We hebben grammatica en leestekens verbeterd zonder je betekenis te veranderen. Wil je de opgeschoonde versie versturen?",
-    accept: "Magic fixes accepteren",
-    keep: "Mijn versie behouden",
-    loading: "Je review wordt opgeschoond..."
-  }
-};
-
 function cx(...tokens: Array<string | false | null | undefined>) {
   return tokens.filter(Boolean).join(" ");
 }
@@ -284,29 +210,41 @@ function getPropertyVisual(property: PropertySummary): PropertyVisual {
   };
 }
 
-function buildPropertyFacts(property: PropertySummary) {
+function buildPropertyFacts(property: PropertySummary, locale: string, uiCopy: ReviewIqUiCopy) {
   const facts = [
     property.tagline,
     property.areaDescription,
     property.popularAmenities.length
-      ? `Travelers most often mention ${property.popularAmenities.slice(0, 3).join(", ")} here.`
+      ? formatUiCopy(uiCopy.propertyFactAmenities, {
+          items: property.popularAmenities.slice(0, 3).join(", ")
+        })
       : "",
-    property.policies.checkInWindow ? `Current listing says check-in runs ${property.policies.checkInWindow}.` : "",
-    property.policies.checkOutTime ? `Check-out is listed as ${property.policies.checkOutTime}.` : "",
+    property.policies.checkInWindow ? formatUiCopy(uiCopy.propertyFactCheckIn, { value: property.policies.checkInWindow }) : "",
+    property.policies.checkOutTime ? formatUiCopy(uiCopy.propertyFactCheckOut, { value: property.policies.checkOutTime }) : "",
     property.reviewStats.lastReviewAt
-      ? `The latest review in the dataset was captured on ${new Date(property.reviewStats.lastReviewAt).toLocaleDateString("en-US")}.`
+      ? formatUiCopy(uiCopy.propertyFactLatestReview, {
+          date: new Date(property.reviewStats.lastReviewAt).toLocaleDateString(locale)
+        })
       : "",
     property.reviewHighlights[0]?.summary
-      ? `A recent guest said: ${property.reviewHighlights[0].summary}`
+      ? formatUiCopy(uiCopy.propertyFactRecentGuest, {
+          summary: property.reviewHighlights[0].summary
+        })
       : "",
     property.reviewStats.recentReviewCount
-      ? `${property.reviewStats.recentReviewCount} reviews in the recent slice help ground the follow-up question.`
+      ? formatUiCopy(uiCopy.propertyFactRecentSlice, {
+          count: property.reviewStats.recentReviewCount
+        })
       : "",
     property.candidateGaps[0]?.label
-      ? `One of the highest-value info gaps is ${property.candidateGaps[0].label.toLowerCase()}.`
+      ? formatUiCopy(uiCopy.propertyFactTopGap, {
+          label: property.candidateGaps[0].label.toLowerCase()
+        })
       : "",
     property.candidateGaps[1]?.label
-      ? `Another likely stale topic is ${property.candidateGaps[1].label.toLowerCase()}.`
+      ? formatUiCopy(uiCopy.propertyFactAnotherGap, {
+          label: property.candidateGaps[1].label.toLowerCase()
+        })
       : ""
   ];
 
@@ -360,37 +298,42 @@ function normalizeText(input: string) {
   return input.replace(/\s+/g, " ").trim();
 }
 
-function buildTasteProfile(reviewText: string, previews: AnswerPreview[], property: PropertySummary): TasteProfile {
+function buildTasteProfile(
+  reviewText: string,
+  previews: AnswerPreview[],
+  property: PropertySummary,
+  uiCopy: ReviewIqUiCopy
+): TasteProfile {
   const lower = reviewText.toLowerCase();
   const previewKeys = new Set(previews.map((preview) => preview.attributeKey));
   const seeds = [
     {
-      label: "Value",
-      archetype: "Optimizer",
+      label: uiCopy.tasteValue,
+      archetype: uiCopy.tasteValueArchetype,
       color: "#7B9FD4",
       keywords: ["value", "price", "worth", "deal", "cost", previewKeys.has("value_formoney") ? "value" : ""]
     },
     {
-      label: "Location",
-      archetype: "Seeker",
+      label: uiCopy.tasteLocation,
+      archetype: uiCopy.tasteLocationArchetype,
       color: "#5BC4A8",
       keywords: ["location", "walk", "transit", "neighborhood", "close"]
     },
     {
-      label: "Comfort",
-      archetype: "Nester",
+      label: uiCopy.tasteComfort,
+      archetype: uiCopy.tasteComfortArchetype,
       color: "#C8B87A",
       keywords: ["bed", "sleep", "quiet", "noise", "comfort", "room"]
     },
     {
-      label: "Service",
-      archetype: "Loyalist",
+      label: uiCopy.tasteService,
+      archetype: uiCopy.tasteServiceArchetype,
       color: "#D47B8A",
       keywords: ["staff", "service", "friendly", "helpful", "desk"]
     },
     {
-      label: "Amenities",
-      archetype: "Indulger",
+      label: uiCopy.tasteAmenities,
+      archetype: uiCopy.tasteAmenitiesArchetype,
       color: "#A07BCC",
       keywords: ["pool", "spa", "breakfast", "gym", "restaurant", ...property.popularAmenities.slice(0, 2).map((item) => item.toLowerCase())]
     }
@@ -422,22 +365,32 @@ function buildTasteProfile(reviewText: string, previews: AnswerPreview[], proper
   return {
     label: leaderSeed.label,
     archetype: leaderSeed.archetype,
-    insight: `Your answers leaned hardest toward ${leader.label.toLowerCase()}, with ${runnerUp.label.toLowerCase()} close behind. That profile is exactly the kind of signal Expedia can use to personalize future ranking and highlight the facts you care about most.`,
+    insight: formatUiCopy(uiCopy.tasteInsight, {
+      leader: leader.label.toLowerCase(),
+      runnerUp: runnerUp.label.toLowerCase()
+    }),
     recommendations: [
-      `${leader.label}-forward stays`,
-      `Top-rated ${runnerUp.label.toLowerCase()} picks`,
-      "Freshly updated listings"
+      formatUiCopy(uiCopy.recommendationLeader, { leader: leader.label.toLowerCase() }),
+      formatUiCopy(uiCopy.recommendationRunnerUp, { runnerUp: runnerUp.label.toLowerCase() }),
+      uiCopy.recommendationFresh
     ],
     segments: normalized
   };
 }
 
-function describeNudge(reviewText: string, coverageScore: number, nextGap: CandidateGap | null, promptCount: number, remainingGapCount: number) {
+function describeNudge(
+  reviewText: string,
+  coverageScore: number,
+  nextGap: CandidateGap | null,
+  promptCount: number,
+  remainingGapCount: number,
+  uiCopy: ReviewIqUiCopy
+) {
   const words = countWords(reviewText);
   if (words < 8) {
     return {
       tone: "probe",
-      text: "Start with what stood out most: the room, the staff, the location, or the overall feel."
+      text: uiCopy.nudgeStart
     };
   }
 
@@ -451,13 +404,13 @@ function describeNudge(reviewText: string, coverageScore: number, nextGap: Candi
   if (!remainingGapCount || promptCount >= INLINE_PROMPT_LIMIT) {
     return {
       tone: "great",
-      text: "Thank you for your valuable input!"
+      text: uiCopy.nudgeThankYou
     };
   }
 
   return {
     tone: "great",
-    text: "Thank you for your valuable input!"
+    text: uiCopy.nudgeThankYou
   };
 }
 
@@ -469,25 +422,25 @@ function composeAnswer(choice: string, details: string) {
   return normalizeText(choice || details);
 }
 
-function choiceVariant(label: string) {
+function choiceVariant(label: string, uiCopy: ReviewIqUiCopy) {
   const lower = label.toLowerCase();
-  if (lower === "yes") {
+  if (lower === uiCopy.yes.toLowerCase()) {
     return "yes";
   }
 
-  if (lower === "no") {
+  if (lower === uiCopy.no.toLowerCase()) {
     return "no";
   }
 
   return "default";
 }
 
-function buildQuestionChoices(question: SessionQuestion) {
+function buildQuestionChoices(question: SessionQuestion, uiCopy: ReviewIqUiCopy) {
   if (question.answerType === "short_text") {
     return [];
   }
 
-  return question.choices.length ? question.choices : ["Yes", "No", "Not sure"];
+  return question.choices.length ? question.choices : [uiCopy.yes, uiCopy.no, uiCopy.notSure];
 }
 
 async function fileToDataUrl(file: File) {
@@ -503,8 +456,8 @@ function parseIsoDate(isoDate: string) {
   return new Date(`${isoDate}T00:00:00Z`);
 }
 
-function formatStayDate(isoDate: string) {
-  return parseIsoDate(isoDate).toLocaleDateString("en-US", {
+function formatStayDate(isoDate: string, locale: string) {
+  return parseIsoDate(isoDate).toLocaleDateString(locale, {
     month: "short",
     day: "numeric",
     year: "numeric"
@@ -516,14 +469,14 @@ function getFirstPendingStayId(customer: DemoHydratedCustomer) {
   return customer.stays.find((stay) => !reviewedStayIds.has(stay.stayId))?.stayId ?? customer.stays[0]?.stayId ?? "";
 }
 
-function formatTripDateRange(start: Date, end: Date) {
+function formatTripDateRange(start: Date, end: Date, locale: string) {
   const sameYear = start.getUTCFullYear() === end.getUTCFullYear();
-  const startLabel = start.toLocaleDateString("en-US", {
+  const startLabel = start.toLocaleDateString(locale, {
     month: "short",
     day: "numeric",
     ...(sameYear ? {} : { year: "numeric" })
   });
-  const endLabel = end.toLocaleDateString("en-US", {
+  const endLabel = end.toLocaleDateString(locale, {
     month: "short",
     day: "numeric",
     year: "numeric"
@@ -532,14 +485,68 @@ function formatTripDateRange(start: Date, end: Date) {
   return `${startLabel} - ${endLabel}`;
 }
 
-function formatTripDuration(start: Date, end: Date) {
+function formatTripDuration(start: Date, end: Date, uiCopy: ReviewIqUiCopy) {
   const days = Math.max(1, Math.round((end.getTime() - start.getTime()) / 86400000));
-  return `${days} day${days === 1 ? "" : "s"}`;
+  return `${days} ${days === 1 ? uiCopy.day : uiCopy.days}`;
+}
+
+function getFriendlyVoiceForLocale(locale: string) {
+  if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+    return null;
+  }
+
+  const voices = window.speechSynthesis.getVoices();
+  if (!voices.length) {
+    return null;
+  }
+
+  const normalizedLocale = locale.toLowerCase();
+  const baseLocale = normalizedLocale.split("-")[0];
+  const preferredPatterns = [
+    /natural/i,
+    /premium/i,
+    /enhanced/i,
+    /samantha/i,
+    /ava/i,
+    /allison/i,
+    /serena/i,
+    /karen/i,
+    /moira/i,
+    /daniel/i,
+    /google .* female/i,
+    /microsoft .* online/i
+  ];
+  const avoidPatterns = [/compact/i, /robot/i, /novelty/i];
+
+  const localeMatches = voices.filter((voice) => {
+    const voiceLocale = voice.lang.toLowerCase();
+    return voiceLocale === normalizedLocale || voiceLocale.startsWith(`${baseLocale}-`) || voiceLocale === baseLocale;
+  });
+
+  const candidatePool = localeMatches.length ? localeMatches : voices;
+  const preferredVoice =
+    candidatePool.find(
+      (voice) =>
+        !avoidPatterns.some((pattern) => pattern.test(voice.name)) &&
+        preferredPatterns.some((pattern) => pattern.test(voice.name))
+    ) ??
+    candidatePool.find(
+      (voice) =>
+        !avoidPatterns.some((pattern) => pattern.test(voice.name)) &&
+        /female|woman|zira|aria|jenny|samantha|moira|serena|karen|ava|allison/i.test(voice.name)
+    ) ??
+    candidatePool.find((voice) => !avoidPatterns.some((pattern) => pattern.test(voice.name)) && voice.default) ??
+    candidatePool.find((voice) => !avoidPatterns.some((pattern) => pattern.test(voice.name))) ??
+    null;
+
+  return preferredVoice;
 }
 
 function buildStampediaTrips(
   customer: DemoHydratedCustomer,
-  selectedStayId: string
+  selectedStayId: string,
+  locale: string,
+  uiCopy: ReviewIqUiCopy
 ): StampediaTrip[] {
   const reviewedStayIds = new Set(customer.journal.reviewedStayIds);
   const reviewedStays = customer.stays.filter((stay) => reviewedStayIds.has(stay.stayId));
@@ -555,11 +562,11 @@ function buildStampediaTrips(
       {
         id: `${trip?.tripId ?? "journal"}:blank`,
         tripId: trip?.tripId ?? "journal",
-        title: trip?.title ?? "Stampedia Journal",
-        country: trip?.coverCountry ?? "No stamps yet",
-        subtitle: trip?.subtitle ?? "Submit your first review to start collecting stamps.",
-        dateRange: formatTripDateRange(start, end),
-        durationLabel: formatTripDuration(start, end),
+        title: trip?.title ?? uiCopy.atlasCapsuleJournal,
+        country: trip?.coverCountry ?? uiCopy.noStampsYetCountry,
+        subtitle: trip?.subtitle ?? uiCopy.firstReviewSubtitle,
+        dateRange: formatTripDateRange(start, end, locale),
+        durationLabel: formatTripDuration(start, end, uiCopy),
         collectedCount: 0,
         stampCount: 0,
         stamps: [],
@@ -582,7 +589,7 @@ function buildStampediaTrips(
     const trip = customer.trips.find((item) => item.tripId === stay.tripId);
     const key = `${stay.tripId}:${stay.property.country}`;
     const group = grouped.get(key) ?? {
-      title: trip?.title ?? `${stay.property.country} Journal`,
+      title: trip?.title ?? formatUiCopy(uiCopy.countryJournal, { country: stay.property.country }),
       country: stay.property.country,
       subtitle: trip?.subtitle,
       stays: []
@@ -610,8 +617,8 @@ function buildStampediaTrips(
         title: group.title,
         country: group.country,
         subtitle: group.subtitle,
-        dateRange: formatTripDateRange(start, end),
-        durationLabel: formatTripDuration(start, end),
+        dateRange: formatTripDateRange(start, end, locale),
+        durationLabel: formatTripDuration(start, end, uiCopy),
         collectedCount: sortedStays.length,
         stampCount: sortedStays.length,
         uploadedPhoto: latestUploadedPhoto?.submission?.uploadedPhotoDataUrl
@@ -623,23 +630,30 @@ function buildStampediaTrips(
               caption: latestUploadedPhoto.stay.property.displayName
             }
           : null,
-        stamps: sortedStays.map((stay) => ({
-          stayId: stay.stayId,
-          propertyId: stay.propertyId,
-          tripId: stay.tripId,
-          displayName: stay.property.displayName,
-          city: stay.property.city,
-          country: stay.property.country,
-          checkIn: formatStayDate(stay.checkIn),
-          checkOut: formatStayDate(stay.checkOut),
-          room: stay.roomType,
-          confirmation: stay.confirmation,
-          dateLabel: formatStayDate(stay.checkIn),
-          durationLabel: formatTripDuration(parseIsoDate(stay.checkIn), parseIsoDate(stay.checkOut)),
-          visual: getPropertyVisual(stay.property),
-          collected: true,
-          selected: stay.stayId === selectedStayId
-        }))
+        stamps: sortedStays.map((stay) => {
+          const submission = submissionsByStayId.get(stay.stayId);
+
+          return {
+            stayId: stay.stayId,
+            propertyId: stay.propertyId,
+            tripId: stay.tripId,
+            displayName: stay.property.displayName,
+            city: stay.property.city,
+            country: stay.property.country,
+            checkIn: formatStayDate(stay.checkIn, locale),
+            checkOut: formatStayDate(stay.checkOut, locale),
+            room: stay.roomType,
+            confirmation: stay.confirmation,
+            dateLabel: formatStayDate(stay.checkIn, locale),
+            durationLabel: formatTripDuration(parseIsoDate(stay.checkIn), parseIsoDate(stay.checkOut), uiCopy),
+            visual: getPropertyVisual(stay.property),
+            reviewTitle: submission?.reviewTitle ?? null,
+            reviewText: submission?.reviewText ?? "",
+            submittedAt: submission?.submittedAt ?? null,
+            collected: true,
+            selected: stay.stayId === selectedStayId
+          };
+        })
       };
     })
     .sort((left, right) => {
@@ -660,6 +674,7 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
   const [languageOpen, setLanguageOpen] = useState(false);
   const [inputMode, setInputMode] = useState<InputMode | null>(null);
   const [stars, setStars] = useState(0);
+  const [reviewTitle, setReviewTitle] = useState("");
   const [reviewText, setReviewText] = useState("");
   const [activeInlinePromptKey, setActiveInlinePromptKey] = useState<string | null>(null);
   const [inlinePromptKeys, setInlinePromptKeys] = useState<string[]>([]);
@@ -683,6 +698,7 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
   const [newStampStayId, setNewStampStayId] = useState<string | null>(null);
   const [magicFixLoading, setMagicFixLoading] = useState(false);
   const [magicFixOpen, setMagicFixOpen] = useState(false);
+  const [magicFixTitle, setMagicFixTitle] = useState("");
   const [magicFixSuggestion, setMagicFixSuggestion] = useState("");
   const [magicFixAnimating, setMagicFixAnimating] = useState(false);
   const [magicFixReviewedKey, setMagicFixReviewedKey] = useState("");
@@ -691,6 +707,7 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
   const [doneModalOpen, setDoneModalOpen] = useState(false);
 
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const voiceTargetRef = useRef<string | null>(null);
   const voiceBaseRef = useRef("");
   const spokenIntroRef = useRef(false);
   const spokenQuestionRef = useRef("");
@@ -701,6 +718,7 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
   const magicFixRequestRef = useRef(0);
   const doneScreenRef = useRef<HTMLDivElement | null>(null);
   const selectedLanguage = LANGUAGES.find((language) => language.code === languageCode) ?? LANGUAGES[0];
+  const uiCopy = getReviewIqUiCopy(selectedLanguage.code);
   const selectedStay = customer.stays.find((stay) => stay.stayId === selectedStayId) ?? customer.stays[0];
   const selectedProperty = selectedStay?.property;
   const reviewedStayIds = new Set(customer.journal.reviewedStayIds);
@@ -719,14 +737,15 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
     coverageScore,
     visibleInlinePrompt,
     inlinePromptKeys.length,
-    completedGapEntries.length
+    completedGapEntries.length,
+    uiCopy
   );
-  const puzzleFacts = selectedProperty ? buildPropertyFacts(selectedProperty) : [];
+  const puzzleFacts = selectedProperty ? buildPropertyFacts(selectedProperty, selectedLanguage.locale, uiCopy) : [];
   const answeredFollowUpCount = followUpQuestions.filter((question) => {
     const answer = questionAnswers[question.sessionId];
     return Boolean(normalizeText(composeAnswer(answer?.choice ?? "", answer?.details ?? "")));
   }).length;
-  const tasteProfile = selectedProperty ? buildTasteProfile(reviewText, answerPreviews, selectedProperty) : null;
+  const tasteProfile = selectedProperty ? buildTasteProfile(reviewText, answerPreviews, selectedProperty, uiCopy) : null;
   const puzzlePieces = [
     stars > 0,
     reviewWordCount >= 8,
@@ -736,8 +755,8 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
     stage === "questions" || remainingGapEntries.length === 0,
     answeredFollowUpCount > 0 || answerPreviews.length > 0
   ].filter(Boolean).length;
-  const stampediaTrips = buildStampediaTrips(customer, selectedStayId);
-  const magicFixCopy = MAGIC_FIX_COPY_BY_LANGUAGE[selectedLanguage.code] ?? MAGIC_FIX_COPY_BY_LANGUAGE.en;
+  const stampediaTrips = buildStampediaTrips(customer, selectedStayId, selectedLanguage.locale, uiCopy);
+  const magicFixCopy = getMagicFixCopy(selectedLanguage.code);
   const canContinueToQuestions = normalizeText(reviewText).length > 0 && stars > 0 && !submitting && !magicFixLoading;
   const canSubmit = canContinueToQuestions && !loadingQuestions && !savingAnswers;
 
@@ -749,7 +768,7 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
     return (
       <div className="puzzle-panel">
         <div className="puzzle-header">
-          <span className="puzzle-title">Reveal the property</span>
+          <span className="puzzle-title">{uiCopy.puzzleTitle}</span>
           <span className="puzzle-prog">{puzzlePieces} / 8</span>
         </div>
         <div className="puzzle-board" style={{ background: propertyVisual.reveal }}>
@@ -760,9 +779,9 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
           </div>
         </div>
         <div className="puzzle-fact">
-          <strong>Did you know?</strong>{" "}
+          <strong>{uiCopy.didYouKnow}</strong>{" "}
           {puzzleFacts[Math.max(0, Math.min(puzzlePieces - 1, puzzleFacts.length - 1))] ||
-            "Answer questions to reveal pieces and unlock property facts."}
+            uiCopy.puzzleFallback}
         </div>
       </div>
     );
@@ -833,6 +852,7 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
     setStage(nextStage);
     setInputMode(null);
     setStars(0);
+    setReviewTitle("");
     setReviewText("");
     resetInlinePromptState();
     setPhotos((current) => {
@@ -852,6 +872,7 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
     magicFixRequestRef.current += 1;
     setMagicFixOpen(false);
     setMagicFixLoading(false);
+    setMagicFixTitle("");
     setMagicFixSuggestion("");
     stopMagicFixAnimation();
     setMagicFixReviewedKey("");
@@ -868,6 +889,26 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
     setAnswerPreviews([]);
     setQuestionRequestedKey("");
     spokenQuestionRef.current = "";
+  }
+
+  function prepareDraftForInputMode(nextMode: InputMode) {
+    if (nextMode === "voice" || (inputMode && inputMode !== nextMode)) {
+      stopVoiceCapture();
+      setReviewTitle("");
+      setReviewText("");
+      resetInlinePromptState();
+      invalidateFollowUps();
+      setMagicFixOpen(false);
+      setMagicFixLoading(false);
+      setMagicFixTitle("");
+      setMagicFixSuggestion("");
+      stopMagicFixAnimation();
+      setMagicFixReviewedKey("");
+    }
+
+    setInputMode(nextMode);
+    setError("");
+    setStage("review");
   }
 
   function questionVoiceTarget(sessionId: string) {
@@ -946,27 +987,74 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
     }
   }
 
-  function stopVoiceCapture() {
+  function speakNextFollowUpQuestion(currentTarget: string | null) {
+    if (stage !== "questions" || inputMode !== "voice" || !voiceSupported) {
+      return;
+    }
+
+    const currentQuestionId = getVoiceQuestionId(currentTarget);
+    if (!currentQuestionId) {
+      return;
+    }
+
+    const currentIndex = followUpQuestions.findIndex((question) => question.sessionId === currentQuestionId);
+    if (currentIndex < 0) {
+      return;
+    }
+
+    const nextQuestion = followUpQuestions[currentIndex + 1];
+    if (!nextQuestion) {
+      return;
+    }
+
+    speakText(formatUiCopy(uiCopy.followUpSpeechIntro, { prompt: nextQuestion.prompt }));
+  }
+
+  function stopVoiceCapture(options?: { announceNextQuestion?: boolean }) {
+    const currentTarget = voiceTargetRef.current;
+
     if (recognitionRef.current && voiceActive) {
       recognitionRef.current.stop();
     }
 
+    voiceTargetRef.current = null;
     setVoiceActive(false);
     setVoiceTarget(null);
+
+    if (options?.announceNextQuestion) {
+      speakNextFollowUpQuestion(currentTarget);
+    }
   }
 
-  function speakText(text: string, afterSpeak?: () => void) {
+  function speakText(text: string, afterSpeak?: () => void, retryCount = 0) {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) {
       afterSpeak?.();
       return;
     }
 
-    window.speechSynthesis.cancel();
+    const synthesis = window.speechSynthesis;
+    const selectedVoice = getFriendlyVoiceForLocale(selectedLanguage.locale);
+
+    if (!selectedVoice && synthesis.getVoices().length === 0 && retryCount < 2) {
+      if (typeof window !== "undefined") {
+        window.setTimeout(() => {
+          speakText(text, afterSpeak, retryCount + 1);
+        }, 120);
+      }
+      return;
+    }
+
+    synthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = selectedLanguage.locale;
-    utterance.rate = 1;
+    if (selectedVoice) {
+      utterance.voice = selectedVoice;
+    }
+    utterance.rate = selectedLanguage.code === "ja" || selectedLanguage.code === "zh" ? 0.94 : 0.96;
+    utterance.pitch = 1.12;
+    utterance.volume = 1;
     utterance.onend = () => afterSpeak?.();
-    window.speechSynthesis.speak(utterance);
+    synthesis.speak(utterance);
   }
 
   function startVoiceCapture(target: string) {
@@ -975,6 +1063,7 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
     }
 
     stopVoiceCapture();
+    voiceTargetRef.current = target;
     setVoiceTarget(target);
     setVoiceActive(true);
     voiceBaseRef.current =
@@ -991,7 +1080,9 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
 
   function toggleVoiceCapture(target: string) {
     if (voiceActive && voiceTarget === target) {
-      stopVoiceCapture();
+      stopVoiceCapture({
+        announceNextQuestion: Boolean(getVoiceQuestionId(target))
+      });
       return;
     }
 
@@ -1131,15 +1222,20 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
     const payload = (await response.json()) as {
       polishedText?: string;
       changed?: boolean;
+      generatedTitle?: string | null;
     };
 
-    if (!payload.polishedText) {
+    const polishedText = typeof payload.polishedText === "string" ? payload.polishedText : trimmed;
+    const generatedTitle = typeof payload.generatedTitle === "string" ? normalizeText(payload.generatedTitle) : "";
+
+    if (!polishedText && !generatedTitle) {
       return null;
     }
 
     return {
-      polishedText: payload.polishedText,
-      changed: Boolean(payload.changed)
+      polishedText,
+      changed: Boolean(payload.changed),
+      generatedTitle
     };
   }
 
@@ -1157,6 +1253,7 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
     const requestId = magicFixRequestRef.current + 1;
     magicFixRequestRef.current = requestId;
     stopMagicFixAnimation();
+    setMagicFixTitle(normalizeText(reviewTitle));
     setMagicFixSuggestion("");
     setMagicFixOpen(true);
     setMagicFixLoading(true);
@@ -1169,16 +1266,22 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
       }
 
       const cleaned = normalizeText(polished?.polishedText ?? "");
-      setMagicFixReviewedKey(reviewKey);
+      const generatedTitle = normalizeText(polished?.generatedTitle ?? "");
 
-      if (polished?.changed && cleaned && cleaned !== trimmed) {
-        animateMagicFixSuggestion(polished.polishedText);
+      if (!polished) {
         return true;
       }
 
-      setMagicFixOpen(false);
-      setMagicFixSuggestion("");
-      return false;
+      setMagicFixTitle(generatedTitle || normalizeText(reviewTitle));
+
+      if (cleaned) {
+        if (cleaned !== trimmed) {
+          animateMagicFixSuggestion(cleaned);
+        } else {
+          setMagicFixSuggestion(cleaned);
+        }
+      }
+      return true;
     } finally {
       if (magicFixRequestRef.current === requestId) {
         setMagicFixLoading(false);
@@ -1187,10 +1290,12 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
   }
 
   async function finalizeSubmission(
+    finalReviewTitle: string | null,
     finalReviewText: string,
     polishedReviewText: string | null,
     nextAnswerPreviews: AnswerPreview[] = answerPreviews
   ) {
+    setReviewTitle(finalReviewTitle ?? "");
     setReviewText(finalReviewText);
 
     const response = await fetch("/api/demo/review", {
@@ -1201,6 +1306,7 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
       body: JSON.stringify({
         customerId: customer.id,
         stayId: selectedStay.stayId,
+        reviewTitle: finalReviewTitle,
         reviewText: finalReviewText,
         polishedText: polishedReviewText,
         answerPreviews: nextAnswerPreviews,
@@ -1223,6 +1329,7 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
     setActiveTripId(`${selectedStay.tripId}:${selectedProperty.country}`);
     magicFixRequestRef.current += 1;
     setMagicFixOpen(false);
+    setMagicFixTitle("");
     setMagicFixSuggestion("");
     stopMagicFixAnimation();
     setDoneModalOpen(true);
@@ -1245,7 +1352,7 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
       }
 
       const nextAnswerPreviews = await captureAnswerPreviews();
-      await finalizeSubmission(reviewText, null, nextAnswerPreviews);
+      await finalizeSubmission(normalizeText(reviewTitle) || null, reviewText, null, nextAnswerPreviews);
     } catch (submitError) {
       const message = submitError instanceof Error ? submitError.message : "Could not submit this review.";
       setError(message);
@@ -1255,12 +1362,15 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
   }
 
   function acceptMagicFixes() {
+    const nextReviewTitle = normalizeText(magicFixTitle) || reviewTitle;
     const nextReviewText = normalizeText(magicFixSuggestion) || reviewText;
     magicFixRequestRef.current += 1;
     stopMagicFixAnimation();
+    setReviewTitle(nextReviewTitle);
     setReviewText(nextReviewText);
     setMagicFixReviewedKey(getMagicFixReviewKey(nextReviewText));
     setMagicFixOpen(false);
+    setMagicFixTitle("");
     setMagicFixSuggestion("");
     scrollViewportToTop();
   }
@@ -1270,6 +1380,7 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
     stopMagicFixAnimation();
     setMagicFixReviewedKey(getMagicFixReviewKey(reviewText));
     setMagicFixOpen(false);
+    setMagicFixTitle("");
     setMagicFixSuggestion("");
     scrollViewportToTop();
   }
@@ -1390,6 +1501,34 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
       return;
     }
 
+    if (stage !== "confirm") {
+      if (staySelectTimerRef.current) {
+        window.clearTimeout(staySelectTimerRef.current);
+        staySelectTimerRef.current = null;
+      }
+
+      if (selectingStayId) {
+        setSelectingStayId(null);
+      }
+    }
+
+    if (stage !== "mode") {
+      if (modeSelectTimerRef.current) {
+        window.clearTimeout(modeSelectTimerRef.current);
+        modeSelectTimerRef.current = null;
+      }
+
+      if (selectingMode) {
+        setSelectingMode(null);
+      }
+    }
+  }, [selectingMode, selectingStayId, stage]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
     const RecognitionCtor = window.SpeechRecognition ?? window.webkitSpeechRecognition;
     if (!RecognitionCtor) {
       setVoiceSupported(false);
@@ -1403,10 +1542,11 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
     recognition.maxAlternatives = 1;
     recognition.lang = selectedLanguage.locale;
     recognition.onresult = (event) => {
+      const startIndex = (event as SpeechRecognitionEvent & { resultIndex?: number }).resultIndex ?? 0;
       let interim = "";
       let finalized = "";
 
-      for (let index = 0; index < event.results.length; index += 1) {
+      for (let index = startIndex; index < event.results.length; index += 1) {
         const result = event.results[index];
         const transcript = result[0]?.transcript ?? "";
         if (result.isFinal) {
@@ -1417,11 +1557,11 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
       }
 
       const next = normalizeText(`${voiceBaseRef.current} ${finalized} ${interim}`);
-      if (voiceTarget === "review") {
+      if (voiceTargetRef.current === "review") {
         setReviewText(next);
       }
 
-      const voiceQuestionId = getVoiceQuestionId(voiceTarget);
+      const voiceQuestionId = getVoiceQuestionId(voiceTargetRef.current);
       if (voiceQuestionId) {
         setQuestionDetailsValue(voiceQuestionId, next);
       }
@@ -1431,10 +1571,12 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
       }
     };
     recognition.onend = () => {
+      voiceTargetRef.current = null;
       setVoiceActive(false);
       setVoiceTarget(null);
     };
     recognition.onerror = () => {
+      voiceTargetRef.current = null;
       setVoiceActive(false);
       setVoiceTarget(null);
     };
@@ -1444,7 +1586,7 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
       recognition.stop();
       recognitionRef.current = null;
     };
-  }, [selectedLanguage, voiceTarget]);
+  }, [selectedLanguage]);
 
   useEffect(() => {
     if (!selectedProperty) {
@@ -1536,13 +1678,18 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
     }
 
     spokenIntroRef.current = true;
-    speakText(`Tell me about your stay at ${selectedProperty.displayName}. I will listen after this prompt.`, () =>
-      startVoiceCapture("review")
-    );
-  }, [stage, inputMode, voiceSupported, selectedProperty]);
+    speakText(formatUiCopy(uiCopy.reviewSpeechIntro, { property: selectedProperty.displayName }));
+  }, [inputMode, selectedProperty, stage, uiCopy, voiceSupported]);
 
   useEffect(() => {
-    if (stage !== "questions" || !followUpQuestions.length || inputMode !== "voice" || !voiceSupported) {
+    if (
+      stage !== "questions" ||
+      !followUpQuestions.length ||
+      inputMode !== "voice" ||
+      !voiceSupported ||
+      magicFixOpen ||
+      magicFixLoading
+    ) {
       return;
     }
 
@@ -1553,8 +1700,8 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
     }
 
     spokenQuestionRef.current = signature;
-    speakText(`Smart follow up. ${firstQuestion.prompt}`, () => startVoiceCapture(questionVoiceTarget(firstQuestion.sessionId)));
-  }, [followUpQuestions, inputMode, questionVoiceTarget, stage, voiceSupported]);
+    speakText(formatUiCopy(uiCopy.followUpSpeechIntro, { prompt: firstQuestion.prompt }));
+  }, [followUpQuestions, inputMode, magicFixLoading, magicFixOpen, stage, uiCopy, voiceSupported]);
 
   if (!selectedStay || !selectedProperty || !propertyVisual || !tasteProfile) {
     return null;
@@ -1566,19 +1713,16 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
         <header className="app-header">
           <div className="app-header-inner">
             <div className="app-brand">
+              <img alt="Atlas logo" className="brand-atlas-image" src="/atlas_logo.png" />
+              <span className="brand-by">by</span>
               <a className="brand-logo" href="#">
-                <span className="brand-mark">↗</span>
-                <span className="brand-word">Expedia</span>
+                <img alt="Expedia logo" className="brand-image" src="/ex_logo.svg" />
               </a>
-              <div className="app-brand-copy">
-                <span className="app-badge">ReviewIQ</span>
-                <span className="app-subtitle">{customer.name}&apos;s adaptive hotel review capture</span>
-              </div>
             </div>
 
             <div className="app-meta">
               <button className="app-link" onClick={onBackToCustomers} type="button">
-                Switch customer
+                {uiCopy.switchCustomer}
               </button>
 
               <div className="lang-btn">
@@ -1618,34 +1762,34 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
               <div className="steps">
                 <div className={cx("stp", stage === "confirm" && "cur", stage !== "confirm" && "done")}>
                   <div className="stp-n">1</div>
-                  <span className="stp-l">Choose Stay</span>
+                  <span className="stp-l">{uiCopy.stepChooseStay}</span>
                 </div>
                 <div className="stp-sep" />
                 <div className={cx("stp", stage === "mode" && "cur", (stage === "review" || stage === "questions" || stage === "done") && "done")}>
                   <div className="stp-n">2</div>
-                  <span className="stp-l">Input Style</span>
+                  <span className="stp-l">{uiCopy.stepInputStyle}</span>
                 </div>
                 <div className="stp-sep" />
                 <div className={cx("stp", stage === "review" && "cur", (stage === "questions" || stage === "done") && "done")}>
                   <div className="stp-n">3</div>
-                  <span className="stp-l">Review</span>
+                  <span className="stp-l">{uiCopy.stepReview}</span>
                 </div>
                 <div className="stp-sep" />
                 <div className={cx("stp", stage === "questions" && "cur", stage === "done" && "done")}>
                   <div className="stp-n">4</div>
-                  <span className="stp-l">Follow-up</span>
+                  <span className="stp-l">{uiCopy.stepFollowUp}</span>
                 </div>
                 <div className="stp-sep" />
                 <div className={cx("stp", stage === "done" && "cur")}>
                   <div className="stp-n">5</div>
-                  <span className="stp-l">Profile</span>
+                  <span className="stp-l">{uiCopy.stepProfile}</span>
                 </div>
               </div>
             </div>
 
             <div className={cx("screen", stage === "confirm" && "on")}>
-          <p className="pg-eye">Step 1 of 5</p>
-          <h1 className="pg-h1">Hi, {customer.firstName}! Choose one of your recent stays to review.</h1>
+          <p className="pg-eye">{formatUiCopy(uiCopy.stepOf, { current: 1, total: 5 })}</p>
+          <h1 className="pg-h1">{formatUiCopy(uiCopy.chooseStayHeading, { name: customer.firstName })}</h1>
 
           <div className="prop-grid">
             {pendingStays.map((stay) => {
@@ -1694,19 +1838,19 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
                     <div className="prop-name stay-card-name">{property.displayName}</div>
                     <div className="stay-mini-grid">
                       <div className="stay-mini-cell">
-                        <div className="stay-cell-lbl">Check-in</div>
-                        <div className="stay-mini-val">{formatStayDate(stay.checkIn)}</div>
+                        <div className="stay-cell-lbl">{uiCopy.checkIn}</div>
+                        <div className="stay-mini-val">{formatStayDate(stay.checkIn, selectedLanguage.locale)}</div>
                       </div>
                       <div className="stay-mini-cell">
-                        <div className="stay-cell-lbl">Check-out</div>
-                        <div className="stay-mini-val">{formatStayDate(stay.checkOut)}</div>
+                        <div className="stay-cell-lbl">{uiCopy.checkOut}</div>
+                        <div className="stay-mini-val">{formatStayDate(stay.checkOut, selectedLanguage.locale)}</div>
                       </div>
                       <div className="stay-mini-cell">
-                        <div className="stay-cell-lbl">Room type</div>
+                        <div className="stay-cell-lbl">{uiCopy.roomType}</div>
                         <div className="stay-mini-val">{stay.roomType}</div>
                       </div>
                       <div className="stay-mini-cell">
-                        <div className="stay-cell-lbl">Confirmation</div>
+                        <div className="stay-cell-lbl">{uiCopy.confirmation}</div>
                         <div className="stay-mini-val stay-code">{stay.confirmation}</div>
                       </div>
                     </div>
@@ -1719,15 +1863,14 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
           {!pendingStays.length ? (
             <div className="card">
               <div className="card-hd">
-                <div className="card-ico">S</div>
-                <div className="card-title">All stays reviewed</div>
+                <div className="card-title">{uiCopy.allStaysReviewed}</div>
               </div>
               <p className="pg-sub" style={{ margin: 0 }}>
-                {customer.firstName}&apos;s review queue is empty. The rest of the journey now lives in Stampedia.
+                {formatUiCopy(uiCopy.emptyQueue, { name: customer.firstName })}
               </p>
               <div className="btn-row" style={{ marginTop: 18 }}>
                 <button className="btn-p" onClick={() => setStage("done")} type="button">
-                  Go to Stampedia
+                  {uiCopy.goToAtlasCapsule}
                 </button>
               </div>
             </div>
@@ -1735,14 +1878,14 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
 
           <div className="btn-row">
             <button className="btn-s" onClick={onBackToCustomers} type="button">
-              Back to customers
+              {uiCopy.backToCustomers}
             </button>
           </div>
             </div>
 
             <div className={cx("screen", stage === "mode" && "on")}>
-          <p className="pg-eye">Step 2 of 5</p>
-          <h1 className="pg-h1">How would you like to share?</h1>
+          <p className="pg-eye">{formatUiCopy(uiCopy.stepOf, { current: 2, total: 5 })}</p>
+          <h1 className="pg-h1">{formatUiCopy(uiCopy.shareHeading, { name: customer.firstName })}</h1>
 
           <div className="mode-grid">
             <button
@@ -1751,9 +1894,7 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
               onClick={() => {
                 setSelectingMode("type");
                 if (typeof window === "undefined") {
-                  setInputMode("type");
-                  setError("");
-                  setStage("review");
+                  prepareDraftForInputMode("type");
                   return;
                 }
 
@@ -1762,9 +1903,7 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
                 }
 
                 modeSelectTimerRef.current = window.setTimeout(() => {
-                  setInputMode("type");
-                  setError("");
-                  setStage("review");
+                  prepareDraftForInputMode("type");
                 }, 220);
               }}
               type="button"
@@ -1775,7 +1914,7 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
                   <path d="M13.5 6.5l4 4" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
                 </svg>
               </div>
-              <div className="mode-title">Write your review</div>
+              <div className="mode-title">{uiCopy.writeYourReview}</div>
             </button>
 
             <button
@@ -1784,9 +1923,7 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
               onClick={() => {
                 setSelectingMode("voice");
                 if (typeof window === "undefined") {
-                  setInputMode("voice");
-                  setError("");
-                  setStage("review");
+                  prepareDraftForInputMode("voice");
                   return;
                 }
 
@@ -1795,9 +1932,7 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
                 }
 
                 modeSelectTimerRef.current = window.setTimeout(() => {
-                  setInputMode("voice");
-                  setError("");
-                  setStage("review");
+                  prepareDraftForInputMode("voice");
                 }, 220);
               }}
               type="button"
@@ -1810,13 +1945,13 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
                   <path d="M9 20h6" stroke="currentColor" strokeLinecap="round" strokeWidth="2" />
                 </svg>
               </div>
-              <div className="mode-title">Speak your review</div>
+              <div className="mode-title">{uiCopy.speakYourReview}</div>
             </button>
           </div>
 
           <div className="btn-row">
             <button className="btn-s" onClick={() => setStage("confirm")} type="button">
-              Back
+              {uiCopy.back}
             </button>
           </div>
             </div>
@@ -1840,7 +1975,7 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
                 <div className="card">
                   <div className="card-hd">
                     <div className="card-ico">S</div>
-                    <div className="card-title">Overall impression</div>
+                    <div className="card-title">{uiCopy.overallImpression}</div>
                   </div>
                   <div className="star-row">
                     {[1, 2, 3, 4, 5].map((value) => (
@@ -1857,61 +1992,108 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
                       </button>
                     ))}
                   </div>
-                  <div className="star-label">{STAR_LABELS[stars]}</div>
+                  <div className="star-label">{STAR_LABELS_BY_LANGUAGE[selectedLanguage.code]?.[stars] ?? STAR_LABELS[stars]}</div>
                 </div>
 
                 <div className="review-section">
-                  <div className="section-lbl">Your review</div>
+                  <div className="section-lbl">{uiCopy.yourReview}</div>
                   <div className={cx("nudge", "show", nudge.tone)}>
                     <div className="n-pip">{nudge.tone === "great" ? "OK" : "AI"}</div>
                     <div className="n-body">
-                      <div className="n-tag">ReviewIQ</div>
+                      <div className="n-tag">{uiCopy.reviewIqTip}</div>
                       <div className="n-txt">{nudge.text}</div>
                     </div>
                   </div>
-                  <div className="ta-wrap">
-                    <textarea
-                      className="main-ta"
-                      onChange={(event) => {
-                        setReviewText(event.target.value);
-                        invalidateFollowUps();
-                      }}
-                      placeholder="What stood out most about your stay? Start anywhere."
-                      value={reviewText}
-                    />
-                    <div className="ta-bar">
+                  {inputMode === "voice" ? (
+                    <div className="voice-review-card">
                       <button
-                        className={cx("voice-btn", voiceActive && voiceTarget === "review" && "rec")}
+                        className={cx("voice-review-btn", voiceActive && voiceTarget === "review" && "rec")}
+                        disabled={!voiceSupported}
                         onClick={() => toggleVoiceCapture("review")}
                         type="button"
                       >
-                        {voiceActive && voiceTarget === "review" ? "Stop recording" : "Voice input"}
+                        <span className="voice-review-btn-dot" aria-hidden="true" />
+                        <span>{voiceActive && voiceTarget === "review" ? uiCopy.stopRecording : uiCopy.recordReview}</span>
                       </button>
-                      <div className="ta-right">
-                        <div className="sat-wrap">
-                          <div className="sat-track">
-                            <div className="sat-fill" style={{ width: `${coverageScore}%` }} />
+                      <div className="voice-review-helper">
+                        {voiceSupported
+                          ? voiceActive && voiceTarget === "review"
+                            ? uiCopy.listeningNow
+                            : uiCopy.tapRecordAndSpeak
+                          : uiCopy.voiceUnavailable}
+                      </div>
+                      <div className="voice-review-transcript-wrap">
+                        <div className="voice-review-transcript-lbl">{uiCopy.transcript}</div>
+                        <textarea
+                          className={cx("voice-review-transcript", !reviewText && "empty")}
+                          onChange={(event) => {
+                            setReviewText(event.target.value);
+                            invalidateFollowUps();
+                          }}
+                          placeholder={uiCopy.reviewTranscriptPlaceholder}
+                          value={reviewText}
+                        />
+                      </div>
+                      <div className="ta-bar voice-review-meta">
+                        <div className="ta-right">
+                          <div className="sat-wrap">
+                            <div className="sat-track">
+                              <div className="sat-fill" style={{ width: `${coverageScore}%` }} />
+                            </div>
+                            <div className="sat-lbl">
+                              {coverageScore >= 82
+                                ? uiCopy.excellentDetail
+                                : coverageScore >= 55
+                                  ? uiCopy.gettingThere
+                                  : coverageScore >= 25
+                                    ? uiCopy.keepGoing
+                                    : uiCopy.keepTalking}
+                            </div>
                           </div>
-                          <div className="sat-lbl">
-                            {coverageScore >= 82
-                              ? "Excellent detail"
-                              : coverageScore >= 55
-                                ? "Getting there"
-                                : coverageScore >= 25
-                                  ? "Keep going"
-                                  : "Keep writing"}
-                          </div>
+                          <span className={cx("wc", reviewWordCount >= 30 && "ok")}>
+                            {reviewWordCount} {reviewWordCount === 1 ? uiCopy.word : uiCopy.words}
+                          </span>
                         </div>
-                        <span className={cx("wc", reviewWordCount >= 30 && "ok")}>
-                          {reviewWordCount} {reviewWordCount === 1 ? "word" : "words"}
-                        </span>
                       </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="ta-wrap">
+                      <textarea
+                        className="main-ta"
+                        onChange={(event) => {
+                          setReviewText(event.target.value);
+                          invalidateFollowUps();
+                        }}
+                        placeholder={uiCopy.writePlaceholder}
+                        value={reviewText}
+                      />
+                      <div className="ta-bar">
+                        <div className="ta-right">
+                          <div className="sat-wrap">
+                            <div className="sat-track">
+                              <div className="sat-fill" style={{ width: `${coverageScore}%` }} />
+                            </div>
+                            <div className="sat-lbl">
+                              {coverageScore >= 82
+                                ? uiCopy.excellentDetail
+                                : coverageScore >= 55
+                                  ? uiCopy.gettingThere
+                                  : coverageScore >= 25
+                                    ? uiCopy.keepGoing
+                                    : uiCopy.keepWriting}
+                            </div>
+                          </div>
+                          <span className={cx("wc", reviewWordCount >= 30 && "ok")}>
+                            {reviewWordCount} {reviewWordCount === 1 ? uiCopy.word : uiCopy.words}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="photo-upload-wrap">
-                  <div className="section-lbl">Add photos (optional)</div>
+                  <div className="section-lbl">{uiCopy.addPhotosOptional}</div>
                   <label
                     className="photo-drop"
                     onDragOver={(event: DragEvent<HTMLLabelElement>) => event.preventDefault()}
@@ -1920,10 +2102,8 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
                       handlePhotoSelection(event.dataTransfer.files).catch(() => undefined);
                     }}
                   >
-                    <div className="photo-drop-txt">Drag photos here or click to upload</div>
-                    <div className="photo-drop-sub">
-                      JPG, PNG or HEIC. Uploaded photos can be classified server-side on the impact screen.
-                    </div>
+                    <div className="photo-drop-txt">{uiCopy.dragPhotos}</div>
+                    <div className="photo-drop-sub">{uiCopy.photoUploadSub}</div>
                     <input
                       accept="image/*"
                       multiple
@@ -1939,7 +2119,7 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
                     <div className="photo-previews">
                       {photos.map((photo) => (
                         <div className="photo-prev" key={photo.id}>
-                          <img alt="Uploaded property evidence" src={photo.previewUrl} />
+                          <img alt={uiCopy.uploadedPhotoAlt} src={photo.previewUrl} />
                           <button className="photo-prev-rm" onClick={() => removePhoto(photo.id)} type="button">
                             x
                           </button>
@@ -1953,7 +2133,7 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
 
                 <div className="btn-row">
                   <button className="btn-s" onClick={() => setStage("mode")} type="button">
-                    Back
+                    {uiCopy.back}
                   </button>
                   <button
                     className="btn-p"
@@ -1971,10 +2151,10 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
                     {magicFixLoading
                       ? magicFixCopy.loading
                       : submitting
-                        ? "Submitting..."
+                        ? uiCopy.submitting
                         : remainingGapEntries.length
-                          ? "Next page"
-                          : "Submit review"}
+                          ? uiCopy.nextPage
+                          : uiCopy.submitReview}
                   </button>
                 </div>
               </div>
@@ -2002,29 +2182,27 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
               <div className="rev-body">
                 <div className="followup-topbar">
                   <div>
-                    <div className="section-lbl">Adaptive questions</div>
-                    <div className="followup-topbar-copy">Answer the last 1-2 gaps, or skip if you don&apos;t want to add more.</div>
+                    <div className="section-lbl">{uiCopy.adaptiveQuestions}</div>
+                    <div className="followup-topbar-copy">{uiCopy.adaptiveQuestionsCopy}</div>
                   </div>
                   <button className="btn-s" disabled={!canSubmit} onClick={() => submitReview().catch(() => undefined)} type="button">
-                    Skip
+                    {uiCopy.skip}
                   </button>
                 </div>
 
                 <div className="smart-q-section">
                   {loadingQuestions ? (
                     <div className="smart-q-card">
-                      <div className="smart-q-dim">Finding the best follow-up</div>
-                      <div className="smart-q-text">
-                        Looking at missing, stale, and conflicting property details to decide what still matters most.
-                      </div>
+                      <div className="smart-q-dim">{uiCopy.findingBestFollowUp}</div>
+                      <div className="smart-q-text">{uiCopy.followUpLoadingText}</div>
                     </div>
                   ) : null}
 
                   {!loadingQuestions && !followUpQuestions.length ? (
                     <div className="smart-q-card answered">
-                      <div className="smart-q-dim">No additional questions</div>
-                      <div className="smart-q-text">Your review already closed the highest-value gaps for this property.</div>
-                      <div className="smart-q-helper">You can submit from here without answering anything else.</div>
+                      <div className="smart-q-dim">{uiCopy.noAdditionalQuestions}</div>
+                      <div className="smart-q-text">{uiCopy.noAdditionalQuestionsBody}</div>
+                      <div className="smart-q-helper">{uiCopy.noAdditionalQuestionsHelper}</div>
                     </div>
                   ) : null}
 
@@ -2032,14 +2210,12 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
                     ? followUpQuestions.map((question, index) => {
                         const answer = questionAnswers[question.sessionId];
                         const combinedAnswer = composeAnswer(answer?.choice ?? "", answer?.details ?? "");
-                        const questionChoices = buildQuestionChoices(question);
+                        const questionChoices = buildQuestionChoices(question, uiCopy);
                         const questionTarget = questionVoiceTarget(question.sessionId);
 
                         return (
                           <div className="smart-q-card" key={question.sessionId}>
-                            <div className="smart-q-dim">
-                              Question {index + 1} of {followUpQuestions.length} • {question.label}
-                            </div>
+                            <div className="smart-q-dim">{formatUiCopy(uiCopy.questionOf, { current: index + 1, total: followUpQuestions.length, label: question.label })}</div>
                             <div className="smart-q-text">{question.prompt}</div>
 
                             {questionChoices.length ? (
@@ -2049,8 +2225,8 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
                                     className={cx(
                                       "choice-btn",
                                       answer?.choice === choice && "sel",
-                                      answer?.choice === choice && choiceVariant(choice) === "yes" && "sel-yes",
-                                      answer?.choice === choice && choiceVariant(choice) === "no" && "sel-no"
+                                      answer?.choice === choice && choiceVariant(choice, uiCopy) === "yes" && "sel-yes",
+                                      answer?.choice === choice && choiceVariant(choice, uiCopy) === "no" && "sel-no"
                                     )}
                                     key={choice}
                                     onClick={() => setQuestionChoiceValue(question.sessionId, choice)}
@@ -2062,32 +2238,50 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
                               </div>
                             ) : null}
 
-                            <div className={cx("scale-expand", "open")}>
-                              <label className="scale-expand-lbl">
-                                {question.placeholder || "Add a little detail if you noticed anything specific."}
-                              </label>
-                              <textarea
-                                className="small-ta"
-                                onChange={(event) => setQuestionDetailsValue(question.sessionId, event.target.value)}
-                                placeholder={question.placeholder}
-                                value={answer?.details ?? ""}
-                              />
-                            </div>
-
-                            {voiceSupported ? (
-                              <div className="voice-inline">
+                            {inputMode === "voice" ? (
+                              <div className="voice-review-card">
                                 <button
-                                  className={cx("voice-btn", voiceActive && voiceTarget === questionTarget && "rec")}
+                                  className={cx("voice-review-btn", voiceActive && voiceTarget === questionTarget && "rec")}
+                                  disabled={!voiceSupported}
                                   onClick={() => toggleVoiceCapture(questionTarget)}
                                   type="button"
                                 >
-                                  {voiceActive && voiceTarget === questionTarget ? "Stop recording" : "Answer by voice"}
+                                  <span className="voice-review-btn-dot" aria-hidden="true" />
+                                  <span>{voiceActive && voiceTarget === questionTarget ? uiCopy.stopRecording : uiCopy.recordAnswer}</span>
                                 </button>
+                                <div className="voice-review-helper">
+                                  {voiceSupported
+                                    ? voiceActive && voiceTarget === questionTarget
+                                      ? uiCopy.answerListeningNow
+                                      : uiCopy.answerIdle
+                                    : uiCopy.voiceUnavailable}
+                                </div>
+                                <div className="voice-review-transcript-wrap">
+                                  <div className="voice-review-transcript-lbl">{uiCopy.transcript}</div>
+                                  <textarea
+                                    className={cx("voice-review-transcript", !answer?.details && "empty")}
+                                    onChange={(event) => setQuestionDetailsValue(question.sessionId, event.target.value)}
+                                    placeholder={question.placeholder || uiCopy.answerTranscriptPlaceholder}
+                                    value={answer?.details ?? ""}
+                                  />
+                                </div>
                               </div>
-                            ) : null}
+                            ) : (
+                              <div className={cx("scale-expand", "open")}>
+                                <label className="scale-expand-lbl">
+                                  {question.placeholder || uiCopy.addDetailIfSpecific}
+                                </label>
+                                <textarea
+                                  className="small-ta"
+                                  onChange={(event) => setQuestionDetailsValue(question.sessionId, event.target.value)}
+                                  placeholder={question.placeholder}
+                                  value={answer?.details ?? ""}
+                                />
+                              </div>
+                            )}
 
                             {combinedAnswer ? (
-                              <div className="followup-status">Answer captured. You can still edit it before submitting.</div>
+                              <div className="followup-status">{uiCopy.answerCaptured}</div>
                             ) : null}
                           </div>
                         );
@@ -2099,10 +2293,10 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
 
                 <div className="btn-row">
                   <button className="btn-s" onClick={() => setStage("review")} type="button">
-                    Back
+                    {uiCopy.back}
                   </button>
                   <button className="btn-p" disabled={!canSubmit} onClick={() => submitReview().catch(() => undefined)} type="button">
-                    {magicFixLoading ? magicFixCopy.loading : submitting ? "Submitting..." : "Submit review"}
+                    {magicFixLoading ? magicFixCopy.loading : submitting ? uiCopy.submitting : uiCopy.submitReview}
                   </button>
                 </div>
               </div>
@@ -2116,6 +2310,7 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
           <StampediaJournal
             activeTripId={activeTripId}
             customerName={customer.firstName}
+            languageCode={selectedLanguage.code}
             newStampStayId={newStampStayId}
             onTripRename={handleTripRename}
             onTripSelect={handleTripSelect}
@@ -2125,11 +2320,11 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
           />
 
           <div className="taste-card">
-            <div className="taste-eye">Traveler Taste Profile</div>
+            <div className="taste-eye">{uiCopy.travelerTasteProfile}</div>
             <div className="taste-lbl">
               {tasteProfile.label} {tasteProfile.archetype}
             </div>
-            <div className="taste-sub">Updated after this review. Recalculates with every stay.</div>
+            <div className="taste-sub">{uiCopy.tasteUpdated}</div>
             <div className="taste-row">
               <div className="taste-donut">
                 <div className="taste-center">
@@ -2152,7 +2347,7 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
             </div>
             <div className="taste-insight">{tasteProfile.insight}</div>
             <div className="taste-recs">
-              <div className="taste-recs-lbl">Matched properties for your next trip</div>
+              <div className="taste-recs-lbl">{uiCopy.matchedProperties}</div>
               <div className="taste-chips">
                 {tasteProfile.recommendations.map((recommendation) => (
                   <span className="taste-chip" key={recommendation}>
@@ -2161,66 +2356,6 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
                 ))}
               </div>
             </div>
-          </div>
-
-          <div className="my-impact-grid">
-            <div className="impact-stat-card blue">
-              <div className="impact-stat-num">{answerPreviews.length}</div>
-              <div className="impact-stat-lbl">Gaps closed</div>
-            </div>
-            <div className="impact-stat-card green">
-              <div className="impact-stat-num">1</div>
-              <div className="impact-stat-lbl">Reviews submitted</div>
-            </div>
-          </div>
-
-          {answerPreviews.length ? (
-            <div className="quest-card">
-              <div className="quest-card-top">
-                <span className="quest-badge">Closed gaps</span>
-                <span className="quest-title">Fresh traveler evidence</span>
-              </div>
-              <div className="quest-desc">
-                {answerPreviews.map((preview) => preview.previewLabel).join(", ")} refreshed from this review.
-              </div>
-            </div>
-          ) : null}
-
-          <div className="card">
-            <div className="card-hd">
-              <div className="card-ico">I</div>
-              <div className="card-title">What you shared</div>
-            </div>
-
-            <div className="ans-item">
-              <div className="ans-ck">&#10003;</div>
-              <div>
-                <div className="ans-q">Your review</div>
-                <div className="ans-a">{reviewText}</div>
-              </div>
-            </div>
-
-            {answerPreviews.map((preview) => (
-              <div className="ans-item" key={`${preview.attributeKey}:${preview.proposedValue}`}>
-                <div className="ans-ck">&#10003;</div>
-                <div>
-                  <div className="ans-q">{preview.label}</div>
-                  <div className="ans-a">{preview.proposedValue}</div>
-                </div>
-              </div>
-            ))}
-
-            {photos.length ? (
-              <div className="ans-item">
-                <div className="ans-ck">&#10003;</div>
-                <div>
-                  <div className="ans-q">Photos</div>
-                  <div className="ans-a">
-                    {photos.length} photo{photos.length === 1 ? "" : "s"} uploaded
-                  </div>
-                </div>
-              </div>
-            ) : null}
           </div>
 
           <div className="btn-row center">
@@ -2233,12 +2368,22 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
               }}
               type="button"
             >
-              Review another property
+              {uiCopy.reviewAnotherProperty}
             </button>
           </div>
             </div>
           </section>
         </main>
+
+        <footer className="app-footer">
+          <div className="app-footer-inner">
+            <div className="app-footer-copy">
+              <img alt="Atlas logo" className="atlas-signature atlas-signature-footer" src="/atlas_logo.png" />
+              <p className="app-footer-subtitle">{uiCopy.footerSubtitle}</p>
+            </div>
+            <div className="app-footer-note">{uiCopy.footerNote}</div>
+          </div>
+        </footer>
       </div>
 
       {magicFixOpen ? (
@@ -2247,25 +2392,37 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
             <h3 className="magicfix-title">{magicFixCopy.title}</h3>
             <p className="magicfix-body">
               {magicFixLoading
-                ? `${magicFixCopy.loading} You can watch the fixes appear, then accept or decline them.`
+                ? `${magicFixCopy.loading} ${uiCopy.magicFixReady}`
                 : magicFixAnimating
-                  ? "We are typing in the grammar and capitalization fixes now. You can edit the enhanced version once it finishes."
+                  ? uiCopy.magicFixTyping
                   : magicFixCopy.body}
             </p>
 
             <div className="magicfix-grid">
               <div className="magicfix-panel">
-                <div className="magicfix-panel-lbl">Your version</div>
+                <div className="magicfix-panel-lbl">{uiCopy.magicFixYourVersion}</div>
                 <div className="magicfix-panel-copy">{reviewText}</div>
               </div>
               <div className="magicfix-panel polished">
-                <div className="magicfix-panel-lbl">Enhanced version</div>
+                <div className="magicfix-panel-lbl">{uiCopy.magicFixEnhancedVersion}</div>
+                <div className="magicfix-title-wrap">
+                  <div className="magicfix-title-lbl">{uiCopy.magicFixSuggestedTitle}</div>
+                  <input
+                    className="magicfix-title-input"
+                    dir={selectedLanguage.dir}
+                    disabled={magicFixLoading}
+                    lang={selectedLanguage.locale}
+                    onChange={(event) => setMagicFixTitle(event.target.value)}
+                    placeholder={magicFixLoading ? uiCopy.magicFixGeneratingTitle : uiCopy.magicFixAddTitle}
+                    value={magicFixTitle}
+                  />
+                </div>
                 <div className="magicfix-status">
                   {magicFixLoading
-                    ? "OpenAI is enhancing your review..."
+                    ? uiCopy.magicFixStatusLoading
                     : magicFixAnimating
-                      ? "Applying fixes..."
-                      : "You can edit this version before accepting."}
+                      ? uiCopy.magicFixStatusApplying
+                      : uiCopy.magicFixStatusEditable}
                 </div>
                 <textarea
                   className={cx("magicfix-edit", (magicFixLoading || magicFixAnimating) && "is-busy")}
@@ -2273,7 +2430,7 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
                   disabled={magicFixLoading || magicFixAnimating}
                   lang={selectedLanguage.locale}
                   onChange={(event) => setMagicFixSuggestion(event.target.value)}
-                  placeholder={magicFixLoading ? "Enhancing your review..." : ""}
+                  placeholder={magicFixLoading ? uiCopy.magicFixTextareaPlaceholder : ""}
                   value={magicFixSuggestion}
                 />
                 {magicFixLoading || magicFixAnimating ? <div className="magicfix-cursor" aria-hidden="true" /> : null}
@@ -2296,7 +2453,7 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
         <div className="done-modal-overlay">
           <div className="done-modal">
             <button
-              aria-label="Close review submitted"
+              aria-label={uiCopy.doneModalAria}
               className="done-modal-close"
               onClick={continueToStampedia}
               type="button"
@@ -2304,10 +2461,10 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
               &#10005;
             </button>
             <div className="done-tick">&#10003;</div>
-            <h2 className="done-h">Review submitted</h2>
-            <p className="done-p">Your review is in. Continue to Stampedia to see your new stamp arrive.</p>
+            <h2 className="done-h">{uiCopy.reviewSubmitted}</h2>
+            <p className="done-p">{uiCopy.reviewSubmittedBody}</p>
             <button className="btn-p done-modal-btn" onClick={continueToStampedia} type="button">
-              Continue to Stampedia
+              {uiCopy.continueToAtlasCapsule}
             </button>
           </div>
         </div>

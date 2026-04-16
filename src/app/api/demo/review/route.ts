@@ -7,6 +7,7 @@ export async function POST(request: Request) {
     const body = (await request.json()) as {
       customerId?: string;
       stayId?: string;
+      reviewTitle?: string | null;
       reviewText?: string;
       polishedText?: string | null;
       answerPreviews?: AnswerPreview[];
@@ -21,6 +22,7 @@ export async function POST(request: Request) {
     const customer = markDemoStayReviewed({
       customerId: body.customerId,
       stayId: body.stayId,
+      reviewTitle: typeof body.reviewTitle === "string" ? body.reviewTitle : null,
       reviewText: body.reviewText,
       polishedText: typeof body.polishedText === "string" ? body.polishedText : null,
       answerPreviews: Array.isArray(body.answerPreviews) ? body.answerPreviews : [],

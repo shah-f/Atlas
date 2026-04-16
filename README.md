@@ -1,6 +1,6 @@
-# ReviewIQ
+# Atlas
 
-ReviewIQ is a modular `Next.js + TypeScript` prototype for the 2026 Hack-AI-thon Expedia challenge. It ingests the provided Expedia property + review datasets, precomputes high-value information gaps, and turns them into one adaptive follow-up question during the review flow.
+Atlas is a modular `Next.js + TypeScript` prototype for the 2026 Hack-AI-thon Expedia challenge. It ingests the provided Expedia property + review datasets, precomputes high-value information gaps, and turns them into one adaptive follow-up question during the review flow.
 
 ## What is working now
 
@@ -26,7 +26,7 @@ ReviewIQ is a modular `Next.js + TypeScript` prototype for the 2026 Hack-AI-thon
 - [`data/generated`](./data/generated): derived catalog artifacts created by the ingestion pipeline
 - [`scripts`](./scripts): offline ingestion and validation scripts
 - [`src/app`](./src/app): Next.js routes, pages, and API endpoints
-- [`src/components/reviewiq`](./src/components/reviewiq): the main ReviewIQ client UI
+- [`src/components/reviewiq`](./src/components/reviewiq): the main Atlas client UI
 - [`src/lib/reviewiq`](./src/lib/reviewiq): runtime data loading, question selection, answer preview, and OpenAI integration
 - [`src/types`](./src/types): browser typing shims
 
