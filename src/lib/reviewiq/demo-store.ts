@@ -297,7 +297,15 @@ async function readBlobStore(): Promise<DemoStore> {
 }
 
 async function readStore(): Promise<DemoStore> {
-  return blobEnabled ? readBlobStore() : readLocalStore();
+  if (!blobEnabled) {
+    return readLocalStore();
+  }
+
+  try {
+    return await readBlobStore();
+  } catch {
+    return readLocalStore();
+  }
 }
 
 async function writeStore(store: DemoStore) {
