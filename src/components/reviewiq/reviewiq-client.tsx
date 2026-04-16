@@ -198,7 +198,7 @@ function normalizeBackgroundSize(size?: string) {
 
   const trimmed = size.trim();
   if (/^\d+(\.\d+)?%$/.test(trimmed)) {
-    return `${trimmed} ${trimmed}`;
+    return "cover";
   }
 
   return trimmed;
@@ -860,15 +860,26 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
     const answer = questionAnswers[question.sessionId];
     return Boolean(normalizeText(composeAnswer(answer?.choice ?? "", answer?.details ?? "")));
   }).length;
+  const detailAnswerCount = followUpQuestions.filter((question) =>
+    Boolean(normalizeText(questionAnswers[question.sessionId]?.details ?? ""))
+  ).length;
   const tasteProfile = selectedProperty ? buildTasteProfile(reviewText, answerPreviews, selectedProperty, uiCopy) : null;
+  const totalGapCount = selectedProperty?.candidateGaps.length ?? 0;
+  const secondGapThreshold = Math.min(2, totalGapCount);
+  const resolvedAllGaps = remainingGapEntries.length === 0;
+  const reachedFollowUpStage = stage === "questions" || stage === "done";
+  const completedReviewFlow = stage === "done";
+  const answeredAnyFollowUp = answeredFollowUpCount > 0 || answerPreviews.length > 0;
+  const detailRevealTarget = Math.min(2, followUpQuestions.length || (completedReviewFlow ? 2 : 0));
   const puzzlePieces = [
     stars > 0,
     reviewWordCount >= 8,
     reviewWordCount >= 20,
     reviewWordCount >= 40,
-    photos.length > 0,
-    stage === "questions" || remainingGapEntries.length === 0,
-    answeredFollowUpCount > 0 || answerPreviews.length > 0
+    totalGapCount > 0 ? completedGapEntries.length >= 1 : reviewWordCount >= 28,
+    secondGapThreshold > 0 ? completedGapEntries.length >= secondGapThreshold : reviewWordCount >= 60,
+    detailRevealTarget >= 1 ? detailAnswerCount >= 1 : reachedFollowUpStage,
+    detailRevealTarget >= 2 ? detailAnswerCount >= 2 || completedReviewFlow : answeredAnyFollowUp || completedReviewFlow
   ].filter(Boolean).length;
   const stampediaTrips = buildStampediaTrips(customer, selectedStayId, selectedLanguage.locale, uiCopy);
   const magicFixCopy = getMagicFixCopy(selectedLanguage.code);
