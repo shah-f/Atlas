@@ -56,9 +56,64 @@
         }
       ],
       "journal": {
-        "reviewedStayIds": []
+        "reviewedStayIds": [
+          "maya-stay-bell-gardens",
+          "maya-stay-broomfield"
+        ]
       },
-      "submissions": []
+      "submissions": [
+        {
+          "stayId": "maya-stay-bell-gardens",
+          "propertyId": "3216b1b7885bffdb336265a8de7322ba0cd477cfb3d4f99d19acf488f76a1941",
+          "submittedAt": "2026-04-16T06:38:41.988Z",
+          "reviewTitle": "Repetitive Hotel Name",
+          "reviewText": "Rome RM Hotel Rome RM Hotel Rome RM Hotel Rome RM Hotel Rome RM Hotel Rome RM Hotel Rome RM Hotel Rome RM Hotel Rome RM Hotel Rome RM Hotel Rome RM Hotel Rome RM Hotel Rome RM Hotel Rome RM Hotel Rome RM Hotel Rome RM Hotel.",
+          "polishedText": null,
+          "answerPreviews": [],
+          "answerPreview": null,
+          "uploadedPhotoDataUrl": null,
+          "uploadedPhotoAlt": null
+        },
+        {
+          "stayId": "maya-stay-broomfield",
+          "propertyId": "db38b19b897dbece3e34919c662b3fd66d23b615395d11fb69264dd3a9b17723",
+          "submittedAt": "2026-04-16T06:42:18.810Z",
+          "reviewTitle": "Repeated Hotel Name",
+          "reviewText": "Rome RM Hotel Rome RM Hotel Rome RM Hotel Rome Rome RM Hotel Rome RM Hotel Rome RM Hotel Rome RM Hotel Rome RM Hotel Rome RM Hotel Rome RM Hotel Rome RM Hotel Rome RM Hotel Rome RM Hotel Rome RM Hotel Rome RM Hotel Rome RM Hotel Rome RM Hotel Rome RM Hotel Rome RM Hotel Rome RM Hotel Rome RM Hotel Rome RM Hotel Rome RM Hotel Rome RM Hotel Rome RM Hotel Rome RM Hotel Rome RM Hotel Rome RM Hotel",
+          "polishedText": null,
+          "answerPreviews": [
+            {
+              "attributeKey": "property_condition",
+              "label": "Property condition",
+              "previewLabel": "property condition",
+              "proposedValue": "No, it felt outdated",
+              "confidence": 0.92,
+              "impactSummary": "This will refresh property condition for future travelers comparing Broomfield Colorado Resort.",
+              "internalNote": "Store as a candidate fact update for property_condition with reviewer-provided evidence from the current session."
+            },
+            {
+              "attributeKey": "cleanliness",
+              "label": "Cleanliness",
+              "previewLabel": "arrival cleanliness",
+              "proposedValue": "Needed better cleaning. llove",
+              "confidence": 0.78,
+              "impactSummary": "This will refresh arrival cleanliness for future travelers comparing Broomfield Colorado Resort.",
+              "internalNote": "Store as a candidate fact update for cleanliness with reviewer-provided evidence from the current session."
+            }
+          ],
+          "answerPreview": {
+            "attributeKey": "property_condition",
+            "label": "Property condition",
+            "previewLabel": "property condition",
+            "proposedValue": "No, it felt outdated",
+            "confidence": 0.92,
+            "impactSummary": "This will refresh property condition for future travelers comparing Broomfield Colorado Resort.",
+            "internalNote": "Store as a candidate fact update for property_condition with reviewer-provided evidence from the current session."
+          },
+          "uploadedPhotoDataUrl": null,
+          "uploadedPhotoAlt": null
+        }
+      ]
     },
     {
       "id": "luca-rossi",

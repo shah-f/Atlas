@@ -820,6 +820,7 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
   const [selectingStayId, setSelectingStayId] = useState<string | null>(null);
   const [selectingMode, setSelectingMode] = useState<InputMode | null>(null);
   const [doneModalOpen, setDoneModalOpen] = useState(false);
+  const [revealedPuzzlePieces, setRevealedPuzzlePieces] = useState(0);
 
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const voiceTargetRef = useRef<string | null>(null);
@@ -881,6 +882,7 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
     detailRevealTarget >= 1 ? detailAnswerCount >= 1 : reachedFollowUpStage,
     detailRevealTarget >= 2 ? detailAnswerCount >= 2 || completedReviewFlow : answeredAnyFollowUp || completedReviewFlow
   ].filter(Boolean).length;
+  const visiblePuzzlePieces = Math.max(revealedPuzzlePieces, puzzlePieces);
   const stampediaTrips = buildStampediaTrips(customer, selectedStayId, selectedLanguage.locale, uiCopy);
   const magicFixCopy = getMagicFixCopy(selectedLanguage.code);
   const canContinueToQuestions = normalizeText(reviewText).length > 0 && stars > 0 && !submitting && !magicFixLoading;
@@ -895,18 +897,18 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
       <div className="puzzle-panel">
         <div className="puzzle-header">
           <span className="puzzle-title">{uiCopy.puzzleTitle}</span>
-          <span className="puzzle-prog">{puzzlePieces} / 8</span>
+          <span className="puzzle-prog">{visiblePuzzlePieces} / 8</span>
         </div>
         <div className="puzzle-board" style={{ background: propertyVisual.reveal }}>
           <div className="puzzle-mask-grid">
             {Array.from({ length: 8 }, (_, index) => (
-              <div className={cx("puzzle-mask", index < puzzlePieces ? "revealed" : "covered")} key={index} />
+              <div className={cx("puzzle-mask", index < visiblePuzzlePieces ? "revealed" : "covered")} key={index} />
             ))}
           </div>
         </div>
         <div className="puzzle-fact">
           <strong>{uiCopy.didYouKnow}</strong>{" "}
-          {puzzleFacts[Math.max(0, Math.min(puzzlePieces - 1, puzzleFacts.length - 1))] ||
+          {puzzleFacts[Math.max(0, Math.min(visiblePuzzlePieces - 1, puzzleFacts.length - 1))] ||
             uiCopy.puzzleFallback}
         </div>
       </div>
@@ -978,6 +980,7 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
     setStage(nextStage);
     setInputMode(null);
     setStars(0);
+    setRevealedPuzzlePieces(0);
     setReviewTitle("");
     setReviewText("");
     resetInlinePromptState();
@@ -1022,6 +1025,7 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
       stopVoiceCapture();
       setReviewTitle("");
       setReviewText("");
+      setRevealedPuzzlePieces(0);
       resetInlinePromptState();
       invalidateFollowUps();
       setMagicFixOpen(false);
@@ -1563,6 +1567,18 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
       });
     });
   }
+
+  useEffect(() => {
+    setRevealedPuzzlePieces(0);
+  }, [customer.id, selectedStayId]);
+
+  useEffect(() => {
+    if (puzzlePieces <= revealedPuzzlePieces) {
+      return;
+    }
+
+    setRevealedPuzzlePieces(puzzlePieces);
+  }, [puzzlePieces, revealedPuzzlePieces]);
 
   useEffect(() => {
     document.documentElement.lang = selectedLanguage.code;
