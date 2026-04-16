@@ -45,13 +45,12 @@ export function ReviewIqDemoShell({ customers }: ReviewIqDemoShellProps) {
         method: "POST"
       });
 
-      const payload = (await response.json()) as {
-        customers?: DemoHydratedCustomer[];
-      };
-
-      if (response.ok && payload.customers) {
-        setCustomerProfiles(payload.customers);
+      if (response.ok) {
         setActiveCustomerId(null);
+
+        if (typeof window !== "undefined") {
+          window.location.reload();
+        }
       }
     } finally {
       setResetting(false);
