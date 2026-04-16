@@ -3,7 +3,12 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Atlas",
-  description: "Adaptive AI for smarter Expedia travel reviews."
+  description: "Adaptive AI for smarter Expedia travel reviews.",
+  icons: {
+    icon: "/atlas-tab-icon.svg",
+    shortcut: "/atlas-tab-icon.svg",
+    apple: "/atlas-tab-icon.svg"
+  }
 };
 
 export default function RootLayout({
