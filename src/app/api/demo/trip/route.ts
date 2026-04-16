@@ -13,7 +13,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing customerId, tripId, or title." }, { status: 400 });
     }
 
-    const customer = renameDemoTrip({
+    const customer = await renameDemoTrip({
       customerId: body.customerId,
       tripId: body.tripId,
       title: body.title

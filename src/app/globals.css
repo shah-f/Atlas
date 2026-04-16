@@ -540,7 +540,7 @@ a {
   border: 1px solid #dde5f2;
   border-radius: 28px;
   box-shadow: 0 18px 40px rgba(20, 39, 89, 0.08);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .intro-panel {
@@ -1851,6 +1851,7 @@ a {
   padding: 16px;
   position: sticky;
   top: 80px;
+  align-self: start;
 }
 
 .puzzle-header {

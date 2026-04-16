@@ -443,13 +443,60 @@ function buildQuestionChoices(question: SessionQuestion, uiCopy: ReviewIqUiCopy)
   return question.choices.length ? question.choices : [uiCopy.yes, uiCopy.no, uiCopy.notSure];
 }
 
-async function fileToDataUrl(file: File) {
+async function readFileAsDataUrl(file: File) {
   return new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result));
     reader.onerror = () => reject(new Error("Could not read file."));
     reader.readAsDataURL(file);
   });
+}
+
+async function loadImageElement(src: string) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("Could not load image."));
+    image.src = src;
+  });
+}
+
+async function fileToDataUrl(file: File) {
+  const original = await readFileAsDataUrl(file);
+
+  if (!file.type.startsWith("image/")) {
+    return original;
+  }
+
+  const image = await loadImageElement(original).catch(() => null);
+  if (!image) {
+    return original;
+  }
+
+  const maxDimension = 1600;
+  const largestSide = Math.max(image.width, image.height);
+  const scale = largestSide > maxDimension ? maxDimension / largestSide : 1;
+
+  if (scale === 1 && file.size <= 1_500_000) {
+    return original;
+  }
+
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(image.width * scale));
+  canvas.height = Math.max(1, Math.round(image.height * scale));
+  const context = canvas.getContext("2d");
+
+  if (!context) {
+    return original;
+  }
+
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+  if (file.type === "image/png") {
+    return canvas.toDataURL("image/png");
+  }
+
+  return canvas.toDataURL("image/jpeg", 0.82);
 }
 
 function parseIsoDate(isoDate: string) {
@@ -548,13 +595,14 @@ function buildStampediaTrips(
   locale: string,
   uiCopy: ReviewIqUiCopy
 ): StampediaTrip[] {
+  const allStays = customer.stays;
   const reviewedStayIds = new Set(customer.journal.reviewedStayIds);
-  const reviewedStays = customer.stays.filter((stay) => reviewedStayIds.has(stay.stayId));
+  const reviewedStays = allStays.filter((stay) => reviewedStayIds.has(stay.stayId));
   const submissionsByStayId = new Map(customer.submissions.map((submission) => [submission.stayId, submission]));
 
   if (!reviewedStays.length) {
     const trip = customer.trips[0];
-    const tripStays = customer.stays.filter((stay) => stay.tripId === trip?.tripId);
+    const tripStays = allStays.filter((stay) => stay.tripId === trip?.tripId);
     const start = tripStays[0] ? parseIsoDate(tripStays[0].checkIn) : new Date();
     const end = tripStays[tripStays.length - 1] ? parseIsoDate(tripStays[tripStays.length - 1].checkOut) : start;
 
@@ -568,7 +616,7 @@ function buildStampediaTrips(
         dateRange: formatTripDateRange(start, end, locale),
         durationLabel: formatTripDuration(start, end, uiCopy),
         collectedCount: 0,
-        stampCount: 0,
+        stampCount: tripStays.length,
         stamps: [],
         uploadedPhoto: null
       }
@@ -581,9 +629,16 @@ function buildStampediaTrips(
       title: string;
       country: string;
       subtitle?: string;
-      stays: DemoHydratedStay[];
+      reviewedStays: DemoHydratedStay[];
+      totalStayCount: number;
     }
   >();
+
+  const totalStayCountByGroup = new Map<string, number>();
+  for (const stay of allStays) {
+    const key = `${stay.tripId}:${stay.property.country}`;
+    totalStayCountByGroup.set(key, (totalStayCountByGroup.get(key) ?? 0) + 1);
+  }
 
   for (const stay of reviewedStays) {
     const trip = customer.trips.find((item) => item.tripId === stay.tripId);
@@ -592,15 +647,18 @@ function buildStampediaTrips(
       title: trip?.title ?? formatUiCopy(uiCopy.countryJournal, { country: stay.property.country }),
       country: stay.property.country,
       subtitle: trip?.subtitle,
-      stays: []
+      reviewedStays: [],
+      totalStayCount: totalStayCountByGroup.get(key) ?? 0
     };
-    group.stays.push(stay);
+    group.reviewedStays.push(stay);
     grouped.set(key, group);
   }
 
   return Array.from(grouped.entries())
     .map(([id, group]) => {
-      const sortedStays = group.stays.sort((left, right) => parseIsoDate(left.checkIn).getTime() - parseIsoDate(right.checkIn).getTime());
+      const sortedStays = group.reviewedStays.sort(
+        (left, right) => parseIsoDate(left.checkIn).getTime() - parseIsoDate(right.checkIn).getTime()
+      );
       const start = parseIsoDate(sortedStays[0].checkIn);
       const end = parseIsoDate(sortedStays[sortedStays.length - 1].checkOut);
       const latestUploadedPhoto = [...sortedStays]
@@ -620,7 +678,7 @@ function buildStampediaTrips(
         dateRange: formatTripDateRange(start, end, locale),
         durationLabel: formatTripDuration(start, end, uiCopy),
         collectedCount: sortedStays.length,
-        stampCount: sortedStays.length,
+        stampCount: group.totalStayCount,
         uploadedPhoto: latestUploadedPhoto?.submission?.uploadedPhotoDataUrl
           ? {
               src: latestUploadedPhoto.submission.uploadedPhotoDataUrl,

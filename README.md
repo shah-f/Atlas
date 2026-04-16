@@ -74,6 +74,33 @@ OPENAI_MODEL=gpt-4.1-mini
 The app works without an API key. In that mode it uses the deterministic gap engine and question templates only.
 With an API key, `npm run ingest` also builds the semantic RAG index and the live session flow upgrades from heuristic-only selection to retrieval-grounded question generation.
 
+For durable hosted demo state on Vercel, also add:
+
+```bash
+BLOB_READ_WRITE_TOKEN=your_vercel_blob_token
+```
+
+Optional:
+
+```bash
+REVIEWIQ_DEMO_BLOB_PATH=reviewiq/demo/demo-db.json
+```
+
+When `BLOB_READ_WRITE_TOKEN` is set, Atlas stores demo customer state in Vercel Blob instead of `data/demo/demo-db.json`, so review submissions, trip renames, and reset behavior persist on the hosted site. Uploaded review photos are also stored in Blob and saved back into the demo state as hosted URLs.
+
+Without `BLOB_READ_WRITE_TOKEN`, the app falls back to the local JSON demo store for development.
+
+## Vercel deployment
+
+1. Push the repo to GitHub.
+2. Import the repo into Vercel as a new project.
+3. Create a Vercel Blob store in that project.
+4. Add `OPENAI_API_KEY` if you want AI-powered follow-ups / review enhancement in production.
+5. Confirm `BLOB_READ_WRITE_TOKEN` is present in the project environment.
+6. Deploy.
+
+After deployment, the hosted Atlas demo should behave like local development, except demo state will persist in Blob instead of a local file.
+
 ## Current system design
 
 The prototype is intentionally split into an offline data phase and a lightweight online phase.

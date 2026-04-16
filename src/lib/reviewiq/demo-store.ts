@@ -1,10 +1,15 @@
-import fs from "node:fs";
+import fs from "node:fs/promises";
 import path from "node:path";
+import { BlobNotFoundError, get, put } from "@vercel/blob";
 import { getCatalogData, getPropertyById, normalizePropertyDisplayName } from "./runtime-data";
 import type { AnswerPreview, DemoCustomer, DemoHydratedCustomer, DemoStay, PropertySummary } from "./types";
 
 const demoDataDir = path.join(process.cwd(), "data", "demo");
 const demoDbPath = path.join(demoDataDir, "demo-db.json");
+const demoDbBlobPath = process.env.REVIEWIQ_DEMO_BLOB_PATH ?? "reviewiq/demo/demo-db.json";
+const blobEnabled = Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+
+type DemoStore = { customers: DemoCustomer[] };
 
 type SeedStay = Omit<DemoStay, "staleFocus" | "staleReason">;
 
@@ -205,34 +210,137 @@ function createSeedCustomers(): DemoCustomer[] {
   ];
 }
 
-function ensureDemoStore() {
-  if (!fs.existsSync(demoDataDir)) {
-    fs.mkdirSync(demoDataDir, { recursive: true });
-  }
+async function ensureLocalDemoStore() {
+  await fs.mkdir(demoDataDir, { recursive: true });
 
-  if (!fs.existsSync(demoDbPath)) {
+  try {
+    await fs.access(demoDbPath);
+  } catch {
     const seeded = createSeedCustomers();
-    fs.writeFileSync(demoDbPath, JSON.stringify({ customers: seeded }, null, 2));
+    await fs.writeFile(demoDbPath, JSON.stringify({ customers: seeded }, null, 2), "utf8");
   }
 }
 
-function readStore(): { customers: DemoCustomer[] } {
-  ensureDemoStore();
-  const raw = fs.readFileSync(demoDbPath, "utf8");
-  const parsed = JSON.parse(raw) as { customers?: DemoCustomer[] };
+async function writeLocalStore(store: DemoStore) {
+  await ensureLocalDemoStore();
+  await fs.writeFile(demoDbPath, JSON.stringify(store, null, 2), "utf8");
+}
+
+async function readLocalStore(): Promise<DemoStore> {
+  await ensureLocalDemoStore();
+  const raw = await fs.readFile(demoDbPath, "utf8");
+  const parsed = JSON.parse(raw) as DemoStore;
 
   if (!parsed.customers?.length) {
     const seeded = createSeedCustomers();
-    writeStore({ customers: seeded });
+    await writeLocalStore({ customers: seeded });
     return { customers: seeded };
   }
 
   return { customers: parsed.customers };
 }
 
-function writeStore(store: { customers: DemoCustomer[] }) {
-  ensureDemoStore();
-  fs.writeFileSync(demoDbPath, JSON.stringify(store, null, 2));
+async function writeBlobStore(store: DemoStore) {
+  await put(demoDbBlobPath, JSON.stringify(store, null, 2), {
+    access: "private",
+    addRandomSuffix: false,
+    allowOverwrite: true,
+    cacheControlMaxAge: 0,
+    contentType: "application/json"
+  });
+}
+
+async function readBlobStore(): Promise<DemoStore> {
+  try {
+    const blob = await get(demoDbBlobPath, {
+      access: "private",
+      useCache: false
+    });
+
+    if (!blob || blob.statusCode !== 200) {
+      const seeded = createSeedCustomers();
+      await writeBlobStore({ customers: seeded });
+      return { customers: seeded };
+    }
+
+    const parsed = (await new Response(blob.stream).json()) as DemoStore;
+
+    if (!parsed.customers?.length) {
+      const seeded = createSeedCustomers();
+      await writeBlobStore({ customers: seeded });
+      return { customers: seeded };
+    }
+
+    return { customers: parsed.customers };
+  } catch (error) {
+    if (error instanceof BlobNotFoundError) {
+      const seeded = createSeedCustomers();
+      await writeBlobStore({ customers: seeded });
+      return { customers: seeded };
+    }
+
+    throw error;
+  }
+}
+
+async function readStore(): Promise<DemoStore> {
+  return blobEnabled ? readBlobStore() : readLocalStore();
+}
+
+async function writeStore(store: DemoStore) {
+  if (blobEnabled) {
+    await writeBlobStore(store);
+    return;
+  }
+
+  await writeLocalStore(store);
+}
+
+function extensionForContentType(contentType: string) {
+  if (contentType === "image/png") {
+    return "png";
+  }
+
+  if (contentType === "image/webp") {
+    return "webp";
+  }
+
+  if (contentType === "image/gif") {
+    return "gif";
+  }
+
+  return "jpg";
+}
+
+function parseDataUrl(dataUrl: string) {
+  const match = /^data:(.+?);base64,(.+)$/.exec(dataUrl);
+  if (!match) {
+    throw new Error("Unsupported photo payload.");
+  }
+
+  return {
+    contentType: match[1],
+    buffer: Buffer.from(match[2], "base64")
+  };
+}
+
+async function persistUploadedPhoto(customerId: string, stayId: string, photoDataUrl: string) {
+  if (!blobEnabled || !photoDataUrl.startsWith("data:")) {
+    return photoDataUrl;
+  }
+
+  const { contentType, buffer } = parseDataUrl(photoDataUrl);
+  const extension = extensionForContentType(contentType);
+  const pathname = `reviewiq/demo-photos/${customerId}/${stayId}.${extension}`;
+  const blob = await put(pathname, buffer, {
+    access: "public",
+    addRandomSuffix: false,
+    allowOverwrite: true,
+    cacheControlMaxAge: 31536000,
+    contentType
+  });
+
+  return blob.url;
 }
 
 function hydrateCustomer(customer: DemoCustomer): DemoHydratedCustomer {
@@ -255,21 +363,23 @@ function hydrateCustomer(customer: DemoCustomer): DemoHydratedCustomer {
   };
 }
 
-export function getDemoCustomers() {
-  return readStore().customers.map(hydrateCustomer);
+export async function getDemoCustomers() {
+  const store = await readStore();
+  return store.customers.map(hydrateCustomer);
 }
 
-export function getDemoCustomer(customerId: string) {
-  return getDemoCustomers().find((customer) => customer.id === customerId) ?? null;
+export async function getDemoCustomer(customerId: string) {
+  const customers = await getDemoCustomers();
+  return customers.find((customer) => customer.id === customerId) ?? null;
 }
 
-export function resetDemoStore() {
+export async function resetDemoStore() {
   const seeded = createSeedCustomers();
-  writeStore({ customers: seeded });
+  await writeStore({ customers: seeded });
   return seeded.map(hydrateCustomer);
 }
 
-export function markDemoStayReviewed(input: {
+export async function markDemoStayReviewed(input: {
   customerId: string;
   stayId: string;
   reviewTitle: string | null;
@@ -279,7 +389,7 @@ export function markDemoStayReviewed(input: {
   uploadedPhotoDataUrl: string | null;
   uploadedPhotoAlt: string | null;
 }) {
-  const store = readStore();
+  const store = await readStore();
   const customer = store.customers.find((item) => item.id === input.customerId);
   if (!customer) {
     throw new Error("Customer not found.");
@@ -295,6 +405,9 @@ export function markDemoStayReviewed(input: {
   }
 
   const existingSubmission = customer.submissions.find((item) => item.stayId === input.stayId);
+  const uploadedPhotoDataUrl = input.uploadedPhotoDataUrl
+    ? await persistUploadedPhoto(input.customerId, input.stayId, input.uploadedPhotoDataUrl)
+    : null;
   const nextSubmission = {
     stayId: input.stayId,
     propertyId: stay.propertyId,
@@ -304,7 +417,7 @@ export function markDemoStayReviewed(input: {
     polishedText: input.polishedText,
     answerPreviews: input.answerPreviews,
     answerPreview: input.answerPreviews[0] ?? null,
-    uploadedPhotoDataUrl: input.uploadedPhotoDataUrl,
+    uploadedPhotoDataUrl,
     uploadedPhotoAlt: input.uploadedPhotoAlt
   };
 
@@ -314,12 +427,12 @@ export function markDemoStayReviewed(input: {
     customer.submissions.push(nextSubmission);
   }
 
-  writeStore(store);
+  await writeStore(store);
   return hydrateCustomer(customer);
 }
 
-export function renameDemoTrip(input: { customerId: string; tripId: string; title: string }) {
-  const store = readStore();
+export async function renameDemoTrip(input: { customerId: string; tripId: string; title: string }) {
+  const store = await readStore();
   const customer = store.customers.find((item) => item.id === input.customerId);
   if (!customer) {
     throw new Error("Customer not found.");
@@ -335,6 +448,6 @@ export function renameDemoTrip(input: { customerId: string; tripId: string; titl
     trip.title = nextTitle;
   }
 
-  writeStore(store);
+  await writeStore(store);
   return hydrateCustomer(customer);
 }

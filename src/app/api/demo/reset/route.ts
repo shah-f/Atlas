@@ -3,7 +3,7 @@ import { resetDemoStore } from "@/lib/reviewiq/demo-store";
 
 export async function POST() {
   try {
-    const customers = resetDemoStore();
+    const customers = await resetDemoStore();
     return NextResponse.json({ customers });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to reset demo data.";

@@ -19,7 +19,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing customerId, stayId, or reviewText." }, { status: 400 });
     }
 
-    const customer = markDemoStayReviewed({
+    const customer = await markDemoStayReviewed({
       customerId: body.customerId,
       stayId: body.stayId,
       reviewTitle: typeof body.reviewTitle === "string" ? body.reviewTitle : null,

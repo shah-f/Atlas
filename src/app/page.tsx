@@ -3,8 +3,8 @@ import { getDemoCustomers } from "@/lib/reviewiq/demo-store";
 
 export const dynamic = "force-dynamic";
 
-export default function HomePage() {
-  const customers = getDemoCustomers();
+export default async function HomePage() {
+  const customers = await getDemoCustomers();
 
   return <ReviewIqDemoShell customers={customers} />;
 }
