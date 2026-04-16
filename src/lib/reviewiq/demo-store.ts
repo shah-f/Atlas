@@ -210,30 +210,43 @@ function createSeedCustomers(): DemoCustomer[] {
   ];
 }
 
-async function ensureLocalDemoStore() {
-  await fs.mkdir(demoDataDir, { recursive: true });
-
-  try {
-    await fs.access(demoDbPath);
-  } catch {
-    const seeded = createSeedCustomers();
-    await fs.writeFile(demoDbPath, JSON.stringify({ customers: seeded }, null, 2), "utf8");
-  }
-}
-
 async function writeLocalStore(store: DemoStore) {
-  await ensureLocalDemoStore();
+  await fs.mkdir(demoDataDir, { recursive: true });
   await fs.writeFile(demoDbPath, JSON.stringify(store, null, 2), "utf8");
 }
 
 async function readLocalStore(): Promise<DemoStore> {
-  await ensureLocalDemoStore();
-  const raw = await fs.readFile(demoDbPath, "utf8");
+  let raw: string;
+
+  try {
+    raw = await fs.readFile(demoDbPath, "utf8");
+  } catch (error) {
+    const seeded = createSeedCustomers();
+
+    if ((error as NodeJS.ErrnoException)?.code === "ENOENT") {
+      try {
+        await writeLocalStore({ customers: seeded });
+      } catch {
+        return { customers: seeded };
+      }
+    } else {
+      return { customers: seeded };
+    }
+
+    return { customers: seeded };
+  }
+
   const parsed = JSON.parse(raw) as DemoStore;
 
   if (!parsed.customers?.length) {
     const seeded = createSeedCustomers();
-    await writeLocalStore({ customers: seeded });
+
+    try {
+      await writeLocalStore({ customers: seeded });
+    } catch {
+      return { customers: seeded };
+    }
+
     return { customers: seeded };
   }
 
