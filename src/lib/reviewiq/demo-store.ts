@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { BlobNotFoundError, get, put } from "@vercel/blob";
+import { BlobNotFoundError, head, put } from "@vercel/blob";
 import { getCatalogData, getPropertyById, normalizePropertyDisplayName } from "./runtime-data";
 import type { AnswerPreview, DemoCustomer, DemoHydratedCustomer, DemoStay, PropertySummary } from "./types";
 
@@ -265,18 +265,18 @@ async function writeBlobStore(store: DemoStore) {
 
 async function readBlobStore(): Promise<DemoStore> {
   try {
-    const blob = await get(demoDbBlobPath, {
-      access: "public",
-      useCache: false
+    const blob = await head(demoDbBlobPath);
+    const response = await fetch(blob.url, {
+      cache: "no-store"
     });
 
-    if (!blob || blob.statusCode !== 200) {
+    if (!response.ok) {
       const seeded = createSeedCustomers();
       await writeBlobStore({ customers: seeded });
       return { customers: seeded };
     }
 
-    const parsed = (await new Response(blob.stream).json()) as DemoStore;
+    const parsed = (await response.json()) as DemoStore;
 
     if (!parsed.customers?.length) {
       const seeded = createSeedCustomers();
@@ -304,7 +304,7 @@ async function readStore(): Promise<DemoStore> {
   try {
     return await readBlobStore();
   } catch {
-    return readLocalStore();
+    return { customers: createSeedCustomers() };
   }
 }
 
