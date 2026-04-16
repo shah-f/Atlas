@@ -6,6 +6,10 @@ function cx(...tokens: Array<string | false | null | undefined>) {
   return tokens.filter(Boolean).join(" ");
 }
 
+function hashString(input: string) {
+  return Array.from(input).reduce((sum, character) => sum + character.charCodeAt(0), 0);
+}
+
 type StampVisual = {
   gradient: string;
   tile: string;
@@ -42,9 +46,15 @@ export type StampediaTrip = {
   collectedCount: number;
   stampCount: number;
   stamps: StampediaStamp[];
+  uploadedPhoto?: {
+    src: string;
+    alt: string;
+    caption: string;
+  } | null;
 };
 
 type StampediaJournalProps = {
+  customerName: string;
   trips: StampediaTrip[];
   activeTripId: string;
   turning: boolean;
@@ -61,56 +71,66 @@ type StampCardProps = {
   flying?: boolean;
 };
 
+type Sparkle = {
+  left: string;
+  top: string;
+  delay: string;
+};
+
 function StampOutline() {
   return (
-    <svg aria-hidden="true" className="stamp-card-outline" viewBox="0 0 280 360">
+    <svg aria-hidden="true" className="stamp-card-outline" viewBox="0 0 360 250">
       <path
-        d="M42 28
-        Q 28 40 40 56
-        Q 52 72 40 88
-        Q 28 104 40 120
-        Q 52 136 40 152
-        Q 28 168 40 184
-        Q 52 200 40 216
-        Q 28 232 40 248
-        Q 52 264 40 280
-        Q 28 296 40 312
-        Q 52 328 42 342
-        Q 58 330 78 338
-        Q 98 346 118 338
-        Q 138 330 158 338
-        Q 178 346 198 338
-        Q 218 330 238 338
-        Q 258 346 244 330
-        Q 256 314 244 298
-        Q 232 282 244 266
-        Q 256 250 244 234
-        Q 232 218 244 202
-        Q 256 186 244 170
-        Q 232 154 244 138
-        Q 256 122 244 106
-        Q 232 90 244 74
-        Q 256 58 244 42
-        Q 230 26 210 34
-        Q 190 42 170 34
-        Q 150 26 130 34
-        Q 110 42 90 34
-        Q 70 26 50 34
-        Q 30 42 42 28 Z"
         className="stamp-card-outline-fill"
+        d="M42 26
+          Q 28 40 40 56
+          Q 52 72 40 88
+          Q 28 104 40 120
+          Q 52 136 40 152
+          Q 28 168 40 184
+          Q 52 200 42 224
+          Q 58 212 86 220
+          Q 114 228 142 220
+          Q 170 212 198 220
+          Q 226 228 254 220
+          Q 282 212 310 220
+          Q 338 228 320 208
+          Q 332 190 320 172
+          Q 308 154 320 136
+          Q 332 118 320 100
+          Q 308 82 320 64
+          Q 332 46 316 28
+          Q 296 18 268 26
+          Q 240 34 212 26
+          Q 184 18 156 26
+          Q 128 34 100 26
+          Q 72 18 42 26 Z"
       />
-      <rect className="stamp-card-outline-frame" height="126" rx="16" width="184" x="48" y="54" />
+      <rect
+        className="stamp-card-outline-frame"
+        height="166"
+        rx="24"
+        ry="24"
+        width="276"
+        x="42"
+        y="42"
+      />
     </svg>
   );
 }
 
 function StampCard({ stamp, index, fresh, flying = false }: StampCardProps) {
-  const rotation = `${index % 2 === 0 ? -2.8 : 2.6}deg`;
+  const rotation = `${index % 2 === 0 ? -2.4 : 2.1}deg`;
   const style = { "--stamp-rotate": rotation, "--stamp-index": index } as CSSProperties;
   const locationLabel = [stamp.city, stamp.country].filter(Boolean).join(", ");
+  const countryCode = (stamp.country || stamp.city || "Travel").slice(0, 3).toUpperCase();
 
   return (
-    <article className={cx("stamp-card", stamp.collected && "collected", stamp.selected && "selected", fresh && "fresh", flying && "flying")} style={style}>
+    <article
+      className={cx("stamp-card", stamp.collected && "collected", stamp.selected && "selected", fresh && "fresh", flying && "flying")}
+      style={style}
+    >
+      {/* stamp body — just the photo inside the perforated border */}
       <div className="stamp-card-shell">
         <StampOutline />
         <div
@@ -119,7 +139,6 @@ function StampCard({ stamp, index, fresh, flying = false }: StampCardProps) {
           role="img"
           style={{ background: stamp.visual.tile }}
         >
-          <div className="stamp-card-photo-glow" />
           {!stamp.visual.hasPhoto ? (
             <div className="stamp-card-monogram">
               {stamp.displayName
@@ -131,26 +150,38 @@ function StampCard({ stamp, index, fresh, flying = false }: StampCardProps) {
             </div>
           ) : null}
         </div>
+
+        {/* postmark circle — stays on the stamp */}
         <div className="stamp-card-inkring">
-          <span>{(stamp.country || stamp.city || "Travel").slice(0, 3).toUpperCase()}</span>
+          <span>{countryCode}</span>
           <span>{stamp.dateLabel}</span>
         </div>
-        {fresh ? <span className="stamp-card-new">Fresh</span> : null}
+
+        {fresh ? <span className="stamp-card-new">★ New!</span> : null}
       </div>
 
+      {/* caption below the stamp */}
       <div className="stamp-card-caption">
         <div className="stamp-card-name">{stamp.displayName}</div>
         <div className="stamp-card-loc">{locationLabel}</div>
-        <div className="stamp-card-meta">
-          <span>{stamp.dateLabel}</span>
-          <span>{stamp.room}</span>
-        </div>
+        <div className="stamp-card-room">{stamp.room}</div>
       </div>
     </article>
   );
 }
 
+function buildStampediaSparkles(seed: string): Sparkle[] {
+  const base = hashString(seed);
+
+  return Array.from({ length: 3 }, (_, index) => ({
+    left: `${14 + ((base + index * 17) % 74)}%`,
+    top: `${10 + ((base + index * 23) % 28)}%`,
+    delay: `${index * 0.7}s`
+  }));
+}
+
 export function StampediaJournal({
+  customerName,
   trips,
   activeTripId,
   turning,
@@ -163,6 +194,7 @@ export function StampediaJournal({
   const flyoverRef = useRef<HTMLDivElement | null>(null);
   const placeholderRef = useRef<HTMLDivElement | null>(null);
   const [flyoverStyle, setFlyoverStyle] = useState<CSSProperties>({});
+  const [routePulseKey, setRoutePulseKey] = useState(0);
   const activeTrip = trips.find((trip) => trip.id === activeTripId) ?? trips[0];
 
   if (!activeTrip) {
@@ -180,6 +212,7 @@ export function StampediaJournal({
     : newestStamp
       ? `${newestStamp.displayName} just slid into your ${activeTrip.title} spread.`
       : `${activeTrip.collectedCount} stamp${activeTrip.collectedCount === 1 ? "" : "s"} collected for ${activeTrip.country}.`;
+  const sparkles = buildStampediaSparkles(activeTrip.id);
 
   function stepTrip(direction: -1 | 1) {
     if (trips.length <= 1) {
@@ -216,6 +249,10 @@ export function StampediaJournal({
     } as CSSProperties);
   }, [activeTrip.id, activeTrip.stamps.length, newStampStayId, stampAnimationActive]);
 
+  useEffect(() => {
+    setRoutePulseKey((current) => current + 1);
+  }, [activeTrip.id]);
+
   return (
     <section className="stampedia-shell">
       <div className="stampedia-top">
@@ -243,6 +280,26 @@ export function StampediaJournal({
         ) : null}
 
         <div className="stampedia-page stampedia-page-left">
+          {/* decorative postmark bleeds into the spine */}
+          <div className="stampedia-postmark">
+            <span>{activeTrip.country.toUpperCase()}</span>
+            <span>STAMPEDIA</span>
+          </div>
+          <div className="stampedia-margin-doodles left" aria-hidden="true">
+            <span className="stampedia-doodle loop" />
+            <span className="stampedia-doodle cross" />
+            <span className="stampedia-doodle dash" />
+          </div>
+          <div className="stampedia-sparkles" aria-hidden="true">
+            {sparkles.map((sparkle, index) => (
+              <span
+                className="stampedia-sparkle"
+                key={`${activeTrip.id}:${index}`}
+                style={{ left: sparkle.left, top: sparkle.top, animationDelay: sparkle.delay }}
+              />
+            ))}
+          </div>
+
           <div className="stampedia-paper-mark">Stampedia</div>
           <textarea
             className="stampedia-trip-title"
@@ -252,10 +309,28 @@ export function StampediaJournal({
             rows={2}
           />
           <div className="stampedia-profile">
-            <div className="stampedia-avatar">S</div>
             <div>
-              <div className="stampedia-profile-lbl">Traveler capsule</div>
+              <div className="stampedia-profile-lbl">
+                <span>{customerName}&apos;s travel capsule</span>
+                <span className="stampedia-plane" aria-hidden="true">
+                  <svg fill="none" viewBox="0 0 24 24">
+                    <path d="M21 4 10 14" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8" />
+                    <path d="m21 4-7 16-2.6-6.4L5 11l16-7Z" fill="currentColor" />
+                  </svg>
+                </span>
+              </div>
               <div className="stampedia-profile-name">Reviewed stays, saved as keepsakes</div>
+              <div className="stampedia-route" aria-hidden="true">
+                <span className="stampedia-route-dot start" />
+                <span className="stampedia-route-line" />
+                <span className="stampedia-route-dot end" />
+                <span className="stampedia-route-plane-wrap" key={`${activeTrip.id}:${routePulseKey}`}>
+                  <svg className="stampedia-route-plane" fill="none" viewBox="0 0 24 24">
+                    <path d="M21 4 10 14" stroke="currentColor" strokeLinecap="round" strokeWidth="1.7" />
+                    <path d="m21 4-7 16-2.6-6.4L5 11l16-7Z" fill="currentColor" />
+                  </svg>
+                </span>
+              </div>
             </div>
           </div>
 
@@ -282,25 +357,27 @@ export function StampediaJournal({
 
           {visibleStamps.length ? <p className="stampedia-note">{journalNote}</p> : null}
 
-          <div className="stampedia-progress-strip">
-            {visibleStamps.map((stamp) => (
-                <button
-                  className={cx("stampedia-dot", stamp.collected && "collected", stamp.stayId === newStampStayId && "fresh")}
-                  key={stamp.stayId}
-                  onClick={() => onTripSelect(activeTrip.id)}
-                  type="button"
-                >
-                {stamp.displayName.slice(0, 1).toUpperCase()}
-              </button>
-            ))}
-          </div>
+          {activeTrip.uploadedPhoto ? (
+            <div className="journal-photo-card">
+              <div className="journal-photo-tape" />
+              <div
+                aria-label={activeTrip.uploadedPhoto.alt}
+                className="journal-photo-img"
+                role="img"
+                style={{ backgroundImage: `url("${activeTrip.uploadedPhoto.src}")` }}
+              />
+              <div className="journal-photo-caption">{activeTrip.uploadedPhoto.caption}</div>
+            </div>
+          ) : null}
         </div>
 
         <div className="stampedia-page stampedia-page-right">
-          <div className="stampedia-postmark">
-            <span>{activeTrip.country.toUpperCase()}</span>
-            <span>STAMPEDIA</span>
+          <div className="stampedia-margin-doodles right" aria-hidden="true">
+            <span className="stampedia-doodle swirl" />
+            <span className="stampedia-doodle star" />
+            <span className="stampedia-doodle dash blue" />
           </div>
+          <div className="stampedia-tape-strip" />
           <div className="stampedia-grid">
             {activeTrip.stamps.length ? (
               activeTrip.stamps.map((stamp, index) =>

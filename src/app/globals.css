@@ -3,10 +3,12 @@
   --blue: #0000fd;
   --blue-d: #0000cc;
   --blue-xl: #eaeaff;
+  --blue-soft: #eef5ff;
   --navy: #1e243a;
   --navy-mid: #2d3451;
   --yellow: #febf4f;
   --yellow-d: #e5a832;
+  --yellow-soft: #fff6df;
   --white: #ffffff;
   --off: #f7f7f8;
   --border: #e2e2e6;
@@ -36,7 +38,10 @@ body {
   margin: 0;
   min-height: 100vh;
   font-family: "Lato", "Avenir Next", "Segoe UI", sans-serif;
-  background: #d9e9f8;
+  background:
+    radial-gradient(circle at top left, rgba(254, 191, 79, 0.16), transparent 26%),
+    radial-gradient(circle at top right, rgba(0, 0, 253, 0.08), transparent 30%),
+    linear-gradient(180deg, #d9e9f8 0%, #eff5fc 100%);
   color: #191e3b;
   font-size: 14px;
   line-height: 1.5;
@@ -133,20 +138,6 @@ a {
   display: flex;
   gap: 14px;
   align-items: flex-start;
-}
-
-.demo-profile-avatar {
-  width: 52px;
-  height: 52px;
-  border-radius: 16px;
-  background: linear-gradient(135deg, #182041 0%, #1668e3 100%);
-  color: #fff;
-  font-weight: 900;
-  font-size: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
 }
 
 .demo-profile-name {
@@ -338,37 +329,6 @@ a {
   cursor: pointer;
 }
 
-.ok-pill {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  border: 1px solid #d9e2f1;
-  border-radius: 999px;
-  background: #f8fbff;
-  padding: 8px 12px;
-}
-
-.ok-pip {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #1668e3;
-}
-
-.ok-lbl {
-  font-size: 11px;
-  font-weight: 700;
-  color: #6d7690;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.ok-val {
-  font-size: 13px;
-  font-weight: 900;
-  color: #1d2340;
-}
-
 .lang-btn {
   position: relative;
 }
@@ -473,9 +433,10 @@ a {
 }
 
 .stp.cur .stp-n {
-  background: var(--yellow);
-  border-color: var(--yellow);
+  background: linear-gradient(135deg, #ffe29a 0%, var(--yellow) 100%);
+  border-color: rgba(254, 191, 79, 0.72);
   color: var(--navy);
+  box-shadow: 0 0 0 4px rgba(0, 0, 253, 0.06);
 }
 
 .stp.done .stp-n {
@@ -516,7 +477,9 @@ a {
 }
 
 .content-shell {
-  background: rgba(255, 255, 255, 0.86);
+  background:
+    radial-gradient(circle at top right, rgba(254, 191, 79, 0.08), transparent 28%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(249, 251, 255, 0.92));
   border: 1px solid #dde5f2;
   border-radius: 28px;
   box-shadow: 0 18px 40px rgba(20, 39, 89, 0.08);
@@ -642,7 +605,7 @@ a {
 }
 
 .btn-p {
-  background: #1668e3;
+  background: linear-gradient(135deg, #1668e3 0%, #0d58ca 78%, #ffd166 140%);
   color: #fff;
   border: none;
   padding: 13px 24px;
@@ -650,11 +613,17 @@ a {
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
-  transition: 0.2s;
+  box-shadow: 0 12px 24px rgba(22, 104, 227, 0.16);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
 }
 
 .btn-p:hover:not(:disabled) {
-  background: #0d58ca;
+  background: linear-gradient(135deg, #0d58ca 0%, #0a49b2 82%, #ffd166 150%);
+  transform: translateY(-1px);
+  box-shadow: 0 16px 28px rgba(22, 104, 227, 0.2);
 }
 
 .btn-p:disabled {
@@ -663,7 +632,7 @@ a {
 }
 
 .btn-s {
-  background: #fff;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(239, 245, 255, 0.92));
   color: #1d2340;
   border: 1.5px solid #cfd7e7;
   padding: 11px 20px;
@@ -671,11 +640,20 @@ a {
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.btn-s:hover:not(:disabled) {
+  border-color: rgba(22, 104, 227, 0.28);
+  box-shadow: 0 10px 20px rgba(20, 39, 89, 0.08);
+  transform: translateY(-1px);
 }
 
 .stay-card,
 .card,
-.helped-bar-wrap,
 .badges-wrap,
 .impact-stat-card {
   background: #fff;
@@ -816,7 +794,9 @@ a {
 
 .prop-card,
 .mode-card {
-  background: #fff;
+  background:
+    radial-gradient(circle at top right, rgba(254, 191, 79, 0.1), transparent 30%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(245, 249, 255, 0.98));
   border: 1px solid #dce3f1;
   border-radius: 22px;
   overflow: hidden;
@@ -969,7 +949,7 @@ a {
   width: 42px;
   height: 42px;
   border-radius: var(--r);
-  background: var(--blue-xl);
+  background: linear-gradient(135deg, var(--blue-soft) 0%, var(--yellow-soft) 100%);
   color: var(--blue);
   display: flex;
   align-items: center;
@@ -1055,7 +1035,8 @@ a {
 }
 
 .rev-body {
-  background: #fff;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 250, 255, 0.96));
   border-radius: 0 0 24px 24px;
   padding: 24px;
   box-shadow: 0 8px 24px rgba(21, 34, 67, 0.06);
@@ -1065,6 +1046,9 @@ a {
   padding: 22px;
   margin-bottom: 14px;
   border: 1px solid #e5eaf3;
+  background:
+    radial-gradient(circle at top right, rgba(254, 191, 79, 0.08), transparent 26%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 251, 255, 0.95));
 }
 
 .card-hd {
@@ -1125,8 +1109,6 @@ a {
 
 .section-lbl,
 .badges-lbl,
-.helped-bar-label,
-.photo-ai-lbl,
 .taste-eye,
 .taste-recs-lbl,
 .ans-q {
@@ -1147,12 +1129,15 @@ a {
 .ta-wrap {
   border: 2px solid var(--border);
   border-radius: var(--r);
-  background: #fff;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(246, 250, 255, 0.96));
 }
 
 .ta-wrap:focus-within {
   border-color: var(--blue);
-  box-shadow: 0 0 0 3px rgba(0, 0, 253, 0.08);
+  box-shadow:
+    0 0 0 3px rgba(0, 0, 253, 0.08),
+    0 14px 24px rgba(20, 39, 89, 0.06);
 }
 
 .main-ta,
@@ -1236,8 +1221,7 @@ a {
   overflow: hidden;
 }
 
-.sat-fill,
-.helped-fill {
+.sat-fill {
   height: 100%;
   border-radius: 2px;
   background: linear-gradient(90deg, var(--blue), #7b9fd4);
@@ -1287,7 +1271,7 @@ a {
 }
 
 .nudge.probe {
-  background: #fff8ee;
+  background: linear-gradient(135deg, #fff8ee 0%, #fffdf8 100%);
   border: 1px solid #fedca0;
 }
 
@@ -1297,7 +1281,7 @@ a {
 }
 
 .nudge.great {
-  background: #ededff;
+  background: linear-gradient(135deg, #ededff 0%, #f6f8ff 100%);
   border: 1px solid #bbbeff;
 }
 
@@ -1311,7 +1295,7 @@ a {
   justify-content: center;
   font-size: 9px;
   font-weight: 900;
-  background: var(--blue);
+  background: linear-gradient(135deg, var(--blue) 0%, #3857ff 100%);
   color: #fff;
 }
 
@@ -1368,16 +1352,14 @@ a {
   color: var(--hint);
 }
 
-.photo-previews,
-.photo-ai-grid {
+.photo-previews {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(68px, 1fr));
   gap: 8px;
   margin-top: 10px;
 }
 
-.photo-prev,
-.photo-ai-item {
+.photo-prev {
   position: relative;
   aspect-ratio: 1;
   border-radius: var(--r);
@@ -1385,8 +1367,7 @@ a {
   background: var(--border);
 }
 
-.photo-prev img,
-.photo-ai-img {
+.photo-prev img {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -1421,7 +1402,7 @@ a {
 
 .smart-q-pill,
 .quest-badge {
-  background: var(--navy);
+  background: linear-gradient(135deg, var(--navy) 0%, #30446f 100%);
   color: #fff;
   font-size: 9px;
   font-weight: 700;
@@ -1437,11 +1418,14 @@ a {
 }
 
 .smart-q-card {
-  background: #fff;
+  background:
+    radial-gradient(circle at top right, rgba(0, 0, 253, 0.05), transparent 30%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(246, 249, 255, 0.96));
   border: 1.5px solid var(--border);
   border-radius: var(--r-lg);
   padding: 16px 18px;
   margin-bottom: 12px;
+  box-shadow: 0 8px 22px rgba(20, 39, 89, 0.05);
 }
 
 .smart-q-card.answered {
@@ -1483,7 +1467,7 @@ a {
   padding: 10px;
   border-radius: var(--r);
   border: 2px solid var(--border);
-  background: #fff;
+  background: linear-gradient(180deg, #fff 0%, #f8fbff 100%);
   font-size: 13px;
   font-weight: 700;
   color: var(--sub);
@@ -1895,20 +1879,25 @@ a {
 .stampedia-eye {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  gap: 8px;
+  font-family: 'Caveat', cursive;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
   color: #70644a;
   margin-bottom: 8px;
+  background: rgba(255, 248, 228, 0.85);
+  border: 1px solid rgba(140, 115, 75, 0.2);
+  border-radius: 999px;
+  padding: 4px 14px 4px 10px;
+  box-shadow: 0 2px 8px rgba(140, 100, 30, 0.08);
 }
 
 .stampedia-eye::before {
-  content: "";
-  width: 28px;
-  height: 1px;
-  background: rgba(112, 100, 74, 0.35);
+  content: "📬";
+  font-size: 14px;
+  letter-spacing: 0;
+  font-family: inherit;
 }
 
 .stampedia-trip-title {
@@ -1919,15 +1908,16 @@ a {
   padding: 0;
   background: transparent;
   color: var(--navy);
-  font-size: 36px;
-  font-weight: 900;
-  line-height: 1.05;
-  letter-spacing: -0.04em;
+  font-family: 'Caveat', cursive;
+  font-size: 42px;
+  font-weight: 700;
+  line-height: 1.0;
+  letter-spacing: -0.01em;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   resize: none;
   overflow: hidden;
-  min-height: 84px;
+  min-height: 82px;
 }
 
 .stampedia-trip-title:focus {
@@ -2029,11 +2019,59 @@ a {
 .stampedia-page-left {
   padding: 18px 22px 18px 16px;
   border-right: 1px solid rgba(132, 112, 75, 0.14);
+  position: relative;
+  /* journal ruled lines */
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 27px,
+    rgba(140, 115, 75, 0.08) 27px,
+    rgba(140, 115, 75, 0.08) 28px
+  );
+  background-position: 0 68px;
 }
 
 .stampedia-page-right {
   padding: 18px 16px 18px 22px;
   overflow: hidden;
+  /* subtle dot-grid scrapbook paper texture */
+  background-image: radial-gradient(circle, rgba(140, 115, 75, 0.1) 1px, transparent 1px);
+  background-size: 18px 18px;
+  background-position: 9px 9px;
+}
+
+.stampedia-page-left > :not(.stampedia-margin-doodles):not(.stampedia-sparkles):not(.stampedia-postmark),
+.stampedia-page-right > :not(.stampedia-margin-doodles) {
+  position: relative;
+  z-index: 1;
+}
+
+/* washi tape strip along the top of the stamp grid page */
+.stampedia-tape-strip {
+  height: 20px;
+  margin: -4px -4px 14px;
+  border-radius: 2px;
+  transform: rotate(-0.4deg);
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: rgba(255, 205, 140, 0.62);
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0px,
+      transparent 18px,
+      rgba(255, 255, 255, 0.28) 18px,
+      rgba(255, 255, 255, 0.28) 19px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.12) 0px,
+      rgba(255, 255, 255, 0.12) 1px,
+      transparent 1px,
+      transparent 4px
+    );
+  box-shadow: 0 2px 6px rgba(140, 90, 20, 0.1), 0 -1px 0 rgba(255,255,255,0.5) inset;
 }
 
 .stampedia-flyover {
@@ -2054,8 +2092,8 @@ a {
 }
 
 .stampedia-flyover .stamp-card {
-  width: 210px;
-  box-shadow: 0 26px 50px rgba(28, 25, 22, 0.25);
+  width: 300px;
+  box-shadow: 0 26px 50px rgba(28, 25, 22, 0.28);
 }
 
 .stamp-card-placeholder {
@@ -2064,56 +2102,303 @@ a {
 }
 
 .stampedia-paper-mark {
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 900;
-  letter-spacing: 0.24em;
+  letter-spacing: 0.28em;
   text-transform: uppercase;
-  color: rgba(110, 96, 68, 0.68);
+  color: rgba(110, 96, 68, 0.55);
   margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stampedia-paper-mark::before {
+  content: "✈";
+  font-size: 14px;
+  letter-spacing: 0;
+  opacity: 0.7;
 }
 
 .stampedia-paper-mark::after {
-  content: none;
+  content: "✈";
+  font-size: 14px;
+  letter-spacing: 0;
+  opacity: 0.7;
+  transform: scaleX(-1);
+  display: inline-block;
 }
 
 .stampedia-profile {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  align-items: flex-start;
   margin-bottom: 18px;
 }
 
-.stampedia-avatar {
-  width: 58px;
-  height: 74px;
-  border-radius: 18px;
-  border: 1px solid rgba(121, 107, 79, 0.16);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(243, 232, 210, 0.72)),
-    linear-gradient(135deg, #101941 0%, #2a53d3 60%, #7fb2ff 100%);
-  color: var(--navy);
-  font-size: 30px;
-  font-weight: 900;
-  display: flex;
+.stampedia-profile-lbl {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  box-shadow: 0 10px 24px rgba(80, 60, 26, 0.1);
+  gap: 8px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: rgba(92, 80, 56, 0.62);
+  margin-bottom: 6px;
 }
 
-.stampedia-profile-lbl {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: rgba(92, 80, 56, 0.58);
-  margin-bottom: 4px;
+.stampedia-plane {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(42, 83, 211, 0.1), rgba(254, 191, 79, 0.18));
+  color: rgba(42, 83, 211, 0.82);
+  box-shadow: inset 0 0 0 1px rgba(42, 83, 211, 0.08);
+}
+
+.stampedia-plane svg {
+  width: 12px;
+  height: 12px;
 }
 
 .stampedia-profile-name {
-  font-size: 16px;
-  line-height: 1.35;
-  font-weight: 800;
+  font-family: 'Caveat', cursive;
+  font-size: 18px;
+  line-height: 1.3;
+  font-weight: 600;
   color: var(--navy);
   max-width: 220px;
+}
+
+.stampedia-route {
+  position: relative;
+  width: 160px;
+  height: 20px;
+  margin-top: 10px;
+}
+
+.stampedia-route-dot {
+  position: absolute;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  transform: translateY(-50%);
+  background: rgba(42, 83, 211, 0.5);
+}
+
+.stampedia-route-dot.start {
+  left: 0;
+}
+
+.stampedia-route-dot.end {
+  right: 0;
+  background: rgba(254, 191, 79, 0.82);
+}
+
+.stampedia-route-line {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  top: 50%;
+  height: 1px;
+  transform: translateY(-50%);
+  border-top: 1.5px dashed rgba(42, 83, 211, 0.22);
+}
+
+.stampedia-route-plane-wrap {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  margin-top: -9px;
+  color: rgba(42, 83, 211, 0.82);
+  animation: stampediaRouteFly 1400ms cubic-bezier(0.2, 0.9, 0.2, 1);
+}
+
+.stampedia-route-plane {
+  width: 18px;
+  height: 18px;
+  filter: drop-shadow(0 4px 8px rgba(42, 83, 211, 0.18));
+}
+
+.stampedia-sparkles {
+  position: absolute;
+  inset: 14px 16px auto 16px;
+  height: 92px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.stampedia-sparkle {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(254, 191, 79, 0.92) 0%, rgba(254, 191, 79, 0.18) 72%, transparent 100%);
+  animation: stampediaSparkleFloat 3.6s ease-in-out infinite;
+}
+
+.stampedia-sparkle:nth-child(2n) {
+  background: radial-gradient(circle, rgba(42, 83, 211, 0.7) 0%, rgba(42, 83, 211, 0.14) 72%, transparent 100%);
+}
+
+.stampedia-margin-doodles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.stampedia-margin-doodles.left {
+  left: 0;
+  right: 36%;
+}
+
+.stampedia-margin-doodles.right {
+  left: 48%;
+  right: 0;
+}
+
+.stampedia-doodle {
+  position: absolute;
+  display: block;
+  opacity: 0.55;
+  filter: blur(0.1px);
+}
+
+.stampedia-doodle.loop {
+  top: 28px;
+  left: 14px;
+  width: 58px;
+  height: 28px;
+  border: 1.8px solid rgba(42, 83, 211, 0.16);
+  border-radius: 999px;
+  transform: rotate(-8deg);
+}
+
+.stampedia-doodle.loop::after {
+  content: "";
+  position: absolute;
+  inset: 5px 7px;
+  border: 1.2px solid rgba(42, 83, 211, 0.11);
+  border-radius: 999px;
+}
+
+.stampedia-doodle.cross {
+  left: 18px;
+  bottom: 108px;
+  width: 18px;
+  height: 18px;
+  transform: rotate(-10deg);
+}
+
+.stampedia-doodle.cross::before,
+.stampedia-doodle.cross::after {
+  content: "";
+  position: absolute;
+  left: 8px;
+  top: 0;
+  width: 1.8px;
+  height: 18px;
+  border-radius: 999px;
+  background: rgba(244, 169, 36, 0.3);
+}
+
+.stampedia-doodle.cross::before {
+  transform: rotate(45deg);
+}
+
+.stampedia-doodle.cross::after {
+  transform: rotate(-45deg);
+}
+
+.stampedia-doodle.dash {
+  width: 44px;
+  height: 8px;
+  border-top: 2px solid rgba(244, 169, 36, 0.28);
+  border-radius: 999px;
+  transform: rotate(-7deg);
+}
+
+.stampedia-doodle.dash::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 4px;
+  width: 26px;
+  border-top: 1.5px solid rgba(244, 169, 36, 0.18);
+  border-radius: 999px;
+}
+
+.stampedia-doodle.dash:not(.blue) {
+  left: 26px;
+  bottom: 38px;
+}
+
+.stampedia-doodle.dash.blue {
+  right: 16px;
+  bottom: 54px;
+  border-top-color: rgba(42, 83, 211, 0.22);
+  transform: rotate(8deg);
+}
+
+.stampedia-doodle.dash.blue::after {
+  border-top-color: rgba(42, 83, 211, 0.14);
+}
+
+.stampedia-doodle.swirl {
+  top: 30px;
+  right: 16px;
+  width: 54px;
+  height: 34px;
+  border-top: 2px solid rgba(42, 83, 211, 0.16);
+  border-right: 2px solid rgba(42, 83, 211, 0.16);
+  border-radius: 100% 100% 100% 20%;
+  transform: rotate(11deg);
+}
+
+.stampedia-doodle.swirl::after {
+  content: "";
+  position: absolute;
+  right: 4px;
+  top: 10px;
+  width: 20px;
+  height: 14px;
+  border-bottom: 1.5px solid rgba(42, 83, 211, 0.14);
+  border-left: 1.5px solid rgba(42, 83, 211, 0.14);
+  border-radius: 0 0 100% 100%;
+  transform: rotate(16deg);
+}
+
+.stampedia-doodle.star {
+  right: 26px;
+  bottom: 118px;
+  width: 18px;
+  height: 18px;
+}
+
+.stampedia-doodle.star::before,
+.stampedia-doodle.star::after {
+  content: "";
+  position: absolute;
+  left: 8px;
+  top: 1px;
+  width: 1.8px;
+  height: 16px;
+  border-radius: 999px;
+  background: rgba(244, 169, 36, 0.28);
+}
+
+.stampedia-doodle.star::after {
+  transform: rotate(90deg);
+}
+
+.stampedia-doodle.star {
+  transform: rotate(28deg);
 }
 
 .stampedia-facts {
@@ -2141,32 +2426,36 @@ a {
 
 .stampedia-fact strong {
   display: block;
+  font-family: 'Caveat', cursive;
   color: var(--navy);
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
 }
 
 .stampedia-note {
   margin-top: 0;
-  padding: 14px 16px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.52);
-  border: 1px solid rgba(121, 107, 79, 0.12);
-  font-size: 13px;
-  line-height: 1.7;
-  color: rgba(30, 36, 58, 0.72);
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255, 252, 238, 0.82);
+  border: 1px solid rgba(121, 107, 79, 0.18);
+  border-left: 3px solid rgba(244, 169, 36, 0.55);
+  font-family: 'Caveat', cursive;
+  font-size: 15px;
+  line-height: 1.6;
+  color: rgba(30, 36, 58, 0.75);
   position: relative;
 }
 
 .stampedia-note::before {
-  content: "Postmark note";
+  content: "✎ journal note";
   display: block;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(92, 80, 56, 0.54);
-  margin-bottom: 8px;
+  color: rgba(92, 80, 56, 0.5);
+  margin-bottom: 6px;
 }
 
 .stampedia-progress-strip {
@@ -2180,12 +2469,22 @@ a {
   width: 34px;
   height: 34px;
   border-radius: 999px;
-  border: 1px dashed rgba(120, 103, 71, 0.32);
-  background: rgba(255, 255, 255, 0.64);
-  color: rgba(30, 36, 58, 0.56);
-  font-size: 11px;
-  font-weight: 800;
-  box-shadow: 0 4px 12px rgba(80, 60, 26, 0.06);
+  border: 2px dashed rgba(120, 103, 71, 0.28);
+  background: rgba(255, 255, 255, 0.7);
+  color: rgba(30, 36, 58, 0.42);
+  font-size: 10px;
+  font-weight: 900;
+  box-shadow: 0 2px 8px rgba(80, 60, 26, 0.05);
+  position: relative;
+}
+
+/* empty dot placeholder ring pattern */
+.stampedia-dot:not(.collected)::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  border: 1px dashed rgba(120, 103, 71, 0.2);
 }
 
 .stampedia-dot.collected {
@@ -2202,30 +2501,30 @@ a {
 .stampedia-grid {
   position: relative;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(168px, 210px));
-  justify-content: start;
+  grid-template-columns: repeat(2, 1fr);
   align-content: start;
-  gap: 18px;
-  min-height: 520px;
-  padding: 8px 0 0;
+  gap: 28px 14px;
+  min-height: 440px;
+  padding: 10px 0 0;
 }
 
 .stampedia-postmark {
   position: absolute;
-  left: -54px;
-  bottom: 18px;
-  width: 150px;
-  height: 150px;
+  right: -44px;
+  bottom: 24px;
+  width: 160px;
+  height: 160px;
   border-radius: 50%;
-  border: 3px double rgba(186, 72, 72, 0.14);
-  color: rgba(186, 72, 72, 0.18);
+  border: 3px double rgba(186, 72, 72, 0.32);
+  color: rgba(186, 72, 72, 0.36);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  transform: rotate(-10deg);
+  transform: rotate(8deg);
   pointer-events: none;
   z-index: 0;
+  background: radial-gradient(circle, rgba(186, 72, 72, 0.04) 0%, transparent 70%);
 }
 
 .stampedia-postmark::before,
@@ -2234,7 +2533,7 @@ a {
   position: absolute;
   inset: 12px;
   border-radius: 50%;
-  border: 1px solid rgba(186, 72, 72, 0.16);
+  border: 1px solid rgba(186, 72, 72, 0.22);
 }
 
 .stampedia-postmark::after {
@@ -2242,18 +2541,53 @@ a {
 }
 
 .stampedia-postmark span:first-child {
-  font-size: 26px;
-  font-weight: 900;
-  letter-spacing: 0.08em;
+  font-family: 'Caveat', cursive;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   line-height: 1;
 }
 
 .stampedia-postmark span:last-child {
-  font-size: 14px;
-  font-weight: 800;
-  letter-spacing: 0.24em;
-  margin-top: 10px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.22em;
+  margin-top: 8px;
   line-height: 1;
+}
+
+@keyframes stampediaRouteFly {
+  0% {
+    transform: translateX(0) translateY(6px) rotate(-8deg);
+    opacity: 0;
+  }
+
+  18% {
+    opacity: 1;
+  }
+
+  55% {
+    transform: translateX(68px) translateY(-8px) rotate(3deg);
+  }
+
+  100% {
+    transform: translateX(136px) translateY(0) rotate(10deg);
+    opacity: 1;
+  }
+}
+
+@keyframes stampediaSparkleFloat {
+  0%,
+  100% {
+    transform: translateY(0) scale(0.9);
+    opacity: 0.35;
+  }
+
+  50% {
+    transform: translateY(-7px) scale(1.1);
+    opacity: 0.9;
+  }
 }
 
 .stampedia-empty {
@@ -2283,43 +2617,147 @@ a {
   line-height: 1.8;
 }
 
+/* ── Photo polaroid on left page ──────────────────────────────────── */
+
+.journal-photo-card {
+  position: relative;
+  margin-top: 18px;
+  padding: 7px 7px 30px;
+  background: #fffef8;
+  border-radius: 3px;
+  box-shadow:
+    0 4px 18px rgba(80, 60, 20, 0.14),
+    0 1px 3px rgba(0, 0, 0, 0.06);
+  transform: rotate(-2deg);
+  border: 1px solid rgba(200, 180, 130, 0.12);
+  z-index: 1;
+}
+
+.journal-photo-tape {
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  transform: translateX(-50%) rotate(1.5deg);
+  width: 58px;
+  height: 18px;
+  border-radius: 2px;
+  z-index: 2;
+  pointer-events: none;
+  background-color: rgba(255, 185, 200, 0.85);
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent 0px,
+    transparent 6px,
+    rgba(255, 255, 255, 0.28) 6px,
+    rgba(255, 255, 255, 0.28) 7px
+  );
+  box-shadow: 0 2px 5px rgba(120, 80, 20, 0.1);
+}
+
+.journal-photo-img {
+  width: 100%;
+  height: 110px;
+  border-radius: 2px;
+  background-size: cover;
+  background-position: center;
+}
+
+.journal-photo-caption {
+  font-family: 'Caveat', cursive;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  color: rgba(30, 36, 58, 0.68);
+  padding-top: 8px;
+  line-height: 1.2;
+}
+
+/* ── Stamp Card (portrait) ─────────────────────────────────────────── */
+
 .stamp-card {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  transform: translateY(calc((var(--stamp-index, 0) % 2) * 10px)) rotate(var(--stamp-rotate, 0deg));
+  display: block;
+  transform: rotate(var(--stamp-rotate, 0deg));
   transition: transform 220ms ease, box-shadow 220ms ease, opacity 220ms ease;
   z-index: 1;
-  box-shadow: 0 16px 30px rgba(86, 69, 35, 0.1);
+  box-shadow: 0 10px 28px rgba(86, 69, 35, 0.11);
+}
+
+/* washi tape strip above each stamp */
+.stamp-card::before {
+  content: "";
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-1.8deg);
+  width: 56px;
+  height: 18px;
+  border-radius: 2px;
+  background-color: rgba(255, 205, 140, 0.82);
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent 0px,
+    transparent 6px,
+    rgba(255, 255, 255, 0.24) 6px,
+    rgba(255, 255, 255, 0.24) 7px
+  );
+  box-shadow: 0 2px 5px rgba(120, 80, 20, 0.12);
+  z-index: 10;
+  pointer-events: none;
+}
+
+.stamp-card:nth-child(even)::before {
+  background-color: rgba(180, 215, 255, 0.82);
+  transform: translateX(-50%) rotate(2deg);
+  width: 48px;
+}
+
+.stamp-card:nth-child(3n)::before {
+  background-color: rgba(185, 245, 210, 0.82);
+  transform: translateX(-50%) rotate(-0.5deg);
+  width: 62px;
+}
+
+.stamp-card:nth-child(5n)::before {
+  background-color: rgba(255, 185, 200, 0.82);
+  transform: translateX(-50%) rotate(1.5deg);
 }
 
 .stamp-card:hover {
-  transform: translateY(calc((var(--stamp-index, 0) % 2) * 10px - 4px)) rotate(var(--stamp-rotate, 0deg));
-  box-shadow: 0 18px 34px rgba(86, 69, 35, 0.16);
-}
-
-.stamp-card.selected {
-  border-color: rgba(42, 83, 211, 0.24);
+  transform: translateY(-3px) rotate(var(--stamp-rotate, 0deg));
+  box-shadow: 0 16px 36px rgba(86, 69, 35, 0.16);
 }
 
 .stamp-card:not(.collected) {
-  opacity: 0.68;
+  opacity: 0.62;
 }
 
 .stamp-card.fresh {
-  animation: stampediaPulseCard 1.4s ease 2;
+  animation: stampDropIn 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.stamp-card.fresh::after {
+  content: "✦";
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  font-size: 18px;
+  color: #f4a924;
+  z-index: 12;
+  pointer-events: none;
+  animation: stampSparkle 1.2s ease 2 0.3s both;
 }
 
 .stamp-card.flying {
-  transform: rotate(-7deg) scale(1.02);
+  transform: rotate(-6deg) scale(1.02);
 }
+
+/* ── Stamp Shell (landscape postage aspect-ratio) ─────────────────── */
 
 .stamp-card-shell {
   position: relative;
   width: 100%;
-  height: 260px;
-  flex: 0 0 auto;
+  aspect-ratio: 360 / 250;
 }
 
 .stamp-card-outline {
@@ -2329,135 +2767,156 @@ a {
   height: 100%;
   z-index: 1;
   pointer-events: none;
+  overflow: visible;
 }
 
 .stamp-card-outline-fill {
-  fill: #fffaf0;
-  stroke: rgba(24, 32, 76, 0.82);
+  fill: #fffcf0;
+  stroke: rgba(30, 38, 80, 0.82);
   stroke-width: 6;
-  filter: drop-shadow(0 16px 26px rgba(86, 69, 35, 0.12));
+  filter: drop-shadow(0 10px 22px rgba(86, 69, 35, 0.14));
 }
 
 .stamp-card.collected .stamp-card-outline-fill {
-  fill: #fff8ed;
+  fill: #fff8ee;
   stroke: rgba(34, 55, 139, 0.88);
 }
 
 .stamp-card-outline-frame {
   fill: none;
-  stroke: rgba(24, 32, 76, 0.84);
-  stroke-width: 6;
+  stroke: rgba(30, 38, 80, 0.78);
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
-.stamp-card-inkring {
-  position: absolute;
-  top: 67%;
-  right: 8%;
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  border: 2px solid rgba(42, 83, 211, 0.18);
-  color: rgba(42, 83, 211, 0.4);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  font-size: 8px;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  transform: rotate(13deg);
-  z-index: 2;
-}
-
-.stamp-card-inkring::before {
-  content: "";
-  position: absolute;
-  inset: 7px;
-  border-radius: 50%;
-  border: 1px solid rgba(42, 83, 211, 0.14);
-}
+/* ── Photo window — fills the stamp body ──────────────────────────── */
 
 .stamp-card-photo-window {
   position: absolute;
-  top: 15%;
-  left: 17.25%;
-  width: 65.75%;
-  height: 35%;
+  top: 16.8%;
+  left: 11.7%;
+  width: 76.6%;
+  height: 66.4%;
   overflow: hidden;
-  border-radius: 16px;
+  border-radius: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
   z-index: 2;
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.16);
   background-position: center;
   background-size: cover;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.22),
+    0 6px 10px rgba(30, 36, 58, 0.08);
 }
 
-.stamp-card-photo-glow {
+/* ── Ink ring postmark (bottom-right corner of photo) ─────────────── */
+
+.stamp-card-inkring {
   position: absolute;
-  inset: auto 0 -40px;
-  height: 90px;
-  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.5), transparent 70%);
-  filter: blur(10px);
+  top: 55%;
+  right: 8%;
+  transform: rotate(14deg);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid rgba(186, 72, 72, 0.36);
+  color: rgba(186, 72, 72, 0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 6.5px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  z-index: 3;
+  background: rgba(255, 250, 245, 0.62);
+  backdrop-filter: blur(3px);
 }
+
+.stamp-card-inkring::before {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border-radius: 50%;
+  border: 1px solid rgba(186, 72, 72, 0.22);
+}
+
+/* ── Caption below the stamp ──────────────────────────────────────── */
+
+.stamp-card-caption {
+  padding: 14px 12px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stamp-card-name {
+  font-family: 'Caveat', cursive;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.05;
+  color: #1a2050;
+}
+
+.stamp-card-loc {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: rgba(30, 36, 58, 0.58);
+}
+
+.stamp-card-room {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 10px;
+  color: rgba(30, 36, 58, 0.46);
+  line-height: 1.5;
+}
+
+/* ── Monogram fallback (no photo) ──────────────────────────────────── */
 
 .stamp-card-monogram {
   position: relative;
   z-index: 1;
+  font-family: 'Caveat', cursive;
   font-size: 28px;
-  font-weight: 900;
-  letter-spacing: 0.06em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.92);
 }
+
 
 .stamp-card-new {
   position: absolute;
-  top: 18px;
-  right: 6px;
-  z-index: 2;
-  border-radius: 8px;
-  background: rgba(255, 239, 239, 0.92);
-  color: #b84c4c;
-  padding: 5px 7px;
-  font-size: 10px;
+  top: 14px;
+  right: 2px;
+  z-index: 12;
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: #f9b035;
+  color: #fff;
+  padding: 4px;
+  font-size: 8.5px;
   font-weight: 900;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  border: 1px dashed rgba(184, 76, 76, 0.28);
-}
-
-.stamp-card-name {
-  font-size: 17px;
+  letter-spacing: 0.04em;
   line-height: 1.2;
-  font-weight: 800;
-  color: var(--navy);
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 3px 10px rgba(200, 120, 0, 0.32), 0 1px 0 rgba(255,255,255,0.4) inset;
+  transform: rotate(12deg);
+  animation: stampSparkle 1.4s ease 0.4s both;
 }
 
-.stamp-card-caption {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 6px 6px 0;
-  margin-top: 4px;
-}
-
-.stamp-card-loc,
-.stamp-card-meta {
-  font-size: 11px;
-  line-height: 1.5;
-  color: rgba(30, 36, 58, 0.6);
-}
-
-.stamp-card-meta {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 2px;
-}
 
 .stamp-card-foot {
   display: flex;
@@ -2554,19 +3013,6 @@ a {
     linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 249, 255, 0.96));
   border: 1px solid rgba(255, 255, 255, 0.92);
   box-shadow: 0 28px 80px rgba(15, 24, 63, 0.24);
-}
-
-.magicfix-kicker {
-  display: inline-flex;
-  padding: 7px 12px;
-  border-radius: 999px;
-  background: rgba(42, 83, 211, 0.08);
-  color: var(--blue);
-  font-size: 11px;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  margin-bottom: 12px;
 }
 
 .magicfix-title {
@@ -2672,65 +3118,9 @@ a {
   }
 }
 
-.helped-bar-wrap,
 .badges-wrap {
   padding: 20px;
   margin-bottom: 12px;
-}
-
-.helped-bar-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 14px;
-}
-
-.helped-count {
-  font-size: 28px;
-  font-weight: 900;
-  color: var(--navy);
-}
-
-.helped-count span:last-child {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--hint);
-}
-
-.helped-track {
-  height: 8px;
-  background: var(--border);
-  border-radius: 4px;
-  overflow: hidden;
-  margin-bottom: 10px;
-}
-
-.helped-milestones {
-  display: flex;
-  justify-content: space-between;
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--hint);
-  text-transform: uppercase;
-}
-
-.helped-milestone {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-
-.helped-milestone-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--border);
-  margin-bottom: 2px;
-}
-
-.helped-milestone-dot.reached {
-  background: var(--blue);
 }
 
 .badge-item {
@@ -2906,33 +3296,6 @@ a {
   border: 1px solid rgba(30, 36, 58, 0.12);
 }
 
-.photo-ai-section {
-  margin-top: 14px;
-  margin-bottom: 12px;
-}
-
-.photo-ai-tag {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.75) 0%, transparent 100%);
-  padding: 14px 6px 5px;
-  font-size: 10px;
-  font-weight: 700;
-  color: #fff;
-  text-align: center;
-  line-height: 1.2;
-}
-
-.photo-ai-loading {
-  background: #fff;
-  border-radius: var(--r-lg);
-  padding: 18px 20px;
-  box-shadow: var(--shadow);
-  color: var(--sub);
-}
-
 .my-impact-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -3035,39 +3398,162 @@ a {
 }
 
 @keyframes stampediaGlow {
-  0%,
-  100% {
+  0% {
     box-shadow:
       inset 0 0 0 1px rgba(255, 255, 255, 0.68),
       0 22px 48px rgba(80, 60, 26, 0.12);
   }
 
-  50% {
+  25% {
     box-shadow:
-      inset 0 0 0 1px rgba(255, 255, 255, 0.78),
-      0 24px 54px rgba(42, 83, 211, 0.16);
+      inset 0 0 0 2px rgba(255, 240, 180, 0.8),
+      0 28px 64px rgba(244, 169, 36, 0.28),
+      0 0 0 6px rgba(244, 169, 36, 0.06);
+  }
+
+  55% {
+    box-shadow:
+      inset 0 0 0 2px rgba(255, 255, 255, 0.9),
+      0 30px 70px rgba(42, 83, 211, 0.22),
+      0 0 0 8px rgba(42, 83, 211, 0.05);
+  }
+
+  100% {
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, 0.68),
+      0 22px 48px rgba(80, 60, 26, 0.12);
   }
 }
 
 @keyframes stampediaCollect {
+  /* pop in from tiny with a springy bounce */
   0% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.74) rotate(-9deg);
+    transform: translate(-50%, -50%) scale(0.08) rotate(-28deg);
   }
 
-  14% {
+  7% {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1.02) rotate(-5deg);
+    transform: translate(-50%, -50%) scale(1.22) rotate(10deg);
   }
 
-  55% {
+  13% {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1.04) rotate(-3deg);
+    transform: translate(-50%, -50%) scale(0.91) rotate(-5deg);
+  }
+
+  18% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.07) rotate(3deg);
+  }
+
+  23% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.98) rotate(-1deg);
+  }
+
+  28% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+  }
+
+  /* gentle floating bob */
+  36% {
+    opacity: 1;
+    transform: translate(-50%, calc(-50% - 9px)) scale(1.02) rotate(-2.5deg);
+  }
+
+  46% {
+    opacity: 1;
+    transform: translate(-50%, calc(-50% + 6px)) scale(0.99) rotate(2deg);
+  }
+
+  54% {
+    opacity: 1;
+    transform: translate(-50%, calc(-50% - 4px)) scale(1.01) rotate(-1deg);
+  }
+
+  60% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1) rotate(0.5deg);
+  }
+
+  /* arc trajectory: swoops up then curves down to destination */
+  72% {
+    opacity: 1;
+    transform: translate(
+      calc(-50% + var(--fly-x) * 0.35),
+      calc(-50% + var(--fly-y) * 0.15 - 44px)
+    ) scale(0.72) rotate(18deg);
+  }
+
+  86% {
+    opacity: 1;
+    transform: translate(
+      calc(-50% + var(--fly-x) * 0.82),
+      calc(-50% + var(--fly-y) * 0.75 - 8px)
+    ) scale(calc(var(--fly-scale) * 1.08)) rotate(7deg);
+  }
+
+  95% {
+    opacity: 1;
+    transform: translate(
+      calc(-50% + var(--fly-x)),
+      calc(-50% + var(--fly-y))
+    ) scale(var(--fly-scale)) rotate(2deg);
+  }
+
+  /* quick fade at landing so the real card can take over */
+  100% {
+    opacity: 0;
+    transform: translate(
+      calc(-50% + var(--fly-x)),
+      calc(-50% + var(--fly-y))
+    ) scale(var(--fly-scale)) rotate(2deg);
+  }
+}
+
+@keyframes stampDropIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px) rotate(var(--stamp-rotate, 0deg)) scale(0.55);
+  }
+
+  60% {
+    opacity: 1;
+    transform: translateY(4px) rotate(var(--stamp-rotate, 0deg)) scale(1.04);
+  }
+
+  80% {
+    opacity: 1;
+    transform: translateY(-1px) rotate(var(--stamp-rotate, 0deg)) scale(0.98);
   }
 
   100% {
+    opacity: 1;
+    transform: translateY(0) rotate(var(--stamp-rotate, 0deg)) scale(1);
+  }
+}
+
+@keyframes stampSparkle {
+  0% {
+    transform: scale(0) rotate(0deg);
     opacity: 0;
-    transform: translate(calc(-50% + var(--fly-x)), calc(-50% + var(--fly-y))) scale(var(--fly-scale)) rotate(6deg);
+  }
+
+  30% {
+    transform: scale(1.5) rotate(120deg);
+    opacity: 1;
+  }
+
+  60% {
+    transform: scale(0.9) rotate(240deg);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(0) rotate(360deg);
+    opacity: 0;
   }
 }
 
@@ -3229,27 +3715,11 @@ a {
   }
 
   .stampedia-flyover .stamp-card {
-    width: 182px;
+    width: 240px;
   }
 
   .stamp-card {
     min-height: 0;
-  }
-
-  .stamp-card-photo-window {
-    top: 15%;
-    left: 17.25%;
-    width: 65.75%;
-    height: 35%;
-  }
-
-  .stamp-card-caption {
-    margin-top: 4px;
-  }
-
-  .stamp-card-shell,
-  .stamp-card-outline {
-    height: 236px;
   }
 
   .steps {

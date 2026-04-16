@@ -169,6 +169,8 @@ export type DemoReviewSubmission = {
   polishedText: string | null;
   answerPreviews: AnswerPreview[];
   answerPreview?: AnswerPreview | null;
+  uploadedPhotoDataUrl?: string | null;
+  uploadedPhotoAlt?: string | null;
 };
 
 export type DemoCustomer = {

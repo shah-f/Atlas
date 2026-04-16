@@ -14,17 +14,11 @@ type ReviewIqClientProps = {
 
 type Stage = "confirm" | "mode" | "review" | "questions" | "done";
 type InputMode = "type" | "voice";
-type TravelParty = "solo" | "couple" | "family" | "friends" | "business";
 
 type ReviewPhoto = {
   id: string;
   file: File;
   previewUrl: string;
-};
-
-type PhotoInsight = {
-  id: string;
-  label: string;
 };
 
 type LanguageOption = {
@@ -84,14 +78,6 @@ const LANGUAGES: LanguageOption[] = [
   { code: "ar", label: "Arabic", locale: "ar-SA", dir: "rtl" },
   { code: "hi", label: "Hindi", locale: "hi-IN", dir: "ltr" },
   { code: "nl", label: "Dutch", locale: "nl-NL", dir: "ltr" }
-];
-
-const PARTY_OPTIONS: Array<{ value: TravelParty; label: string }> = [
-  { value: "solo", label: "Solo" },
-  { value: "couple", label: "Couple" },
-  { value: "family", label: "Family with kids" },
-  { value: "friends", label: "Group of friends" },
-  { value: "business", label: "Business trip" }
 ];
 
 const STAR_LABELS = ["", "Terrible", "Poor", "Okay", "Good", "Excellent"];
@@ -513,10 +499,6 @@ async function fileToDataUrl(file: File) {
   });
 }
 
-function travelHelpedCount(answerPreviewCount: number, photos: ReviewPhoto[]) {
-  return 27 + answerPreviewCount * 12 + photos.length * 4;
-}
-
 function parseIsoDate(isoDate: string) {
   return new Date(`${isoDate}T00:00:00Z`);
 }
@@ -561,6 +543,7 @@ function buildStampediaTrips(
 ): StampediaTrip[] {
   const reviewedStayIds = new Set(customer.journal.reviewedStayIds);
   const reviewedStays = customer.stays.filter((stay) => reviewedStayIds.has(stay.stayId));
+  const submissionsByStayId = new Map(customer.submissions.map((submission) => [submission.stayId, submission]));
 
   if (!reviewedStays.length) {
     const trip = customer.trips[0];
@@ -579,7 +562,8 @@ function buildStampediaTrips(
         durationLabel: formatTripDuration(start, end),
         collectedCount: 0,
         stampCount: 0,
-        stamps: []
+        stamps: [],
+        uploadedPhoto: null
       }
     ];
   }
@@ -612,6 +596,13 @@ function buildStampediaTrips(
       const sortedStays = group.stays.sort((left, right) => parseIsoDate(left.checkIn).getTime() - parseIsoDate(right.checkIn).getTime());
       const start = parseIsoDate(sortedStays[0].checkIn);
       const end = parseIsoDate(sortedStays[sortedStays.length - 1].checkOut);
+      const latestUploadedPhoto = [...sortedStays]
+        .reverse()
+        .map((stay) => ({
+          stay,
+          submission: submissionsByStayId.get(stay.stayId)
+        }))
+        .find(({ submission }) => submission?.uploadedPhotoDataUrl);
 
       return {
         id,
@@ -623,6 +614,15 @@ function buildStampediaTrips(
         durationLabel: formatTripDuration(start, end),
         collectedCount: sortedStays.length,
         stampCount: sortedStays.length,
+        uploadedPhoto: latestUploadedPhoto?.submission?.uploadedPhotoDataUrl
+          ? {
+              src: latestUploadedPhoto.submission.uploadedPhotoDataUrl,
+              alt:
+                latestUploadedPhoto.submission.uploadedPhotoAlt ??
+                `Traveler photo from ${latestUploadedPhoto.stay.property.displayName}`,
+              caption: latestUploadedPhoto.stay.property.displayName
+            }
+          : null,
         stamps: sortedStays.map((stay) => ({
           stayId: stay.stayId,
           propertyId: stay.propertyId,
@@ -659,7 +659,6 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
   const [languageCode, setLanguageCode] = useState("en");
   const [languageOpen, setLanguageOpen] = useState(false);
   const [inputMode, setInputMode] = useState<InputMode | null>(null);
-  const [travelParty, setTravelParty] = useState<TravelParty | null>(null);
   const [stars, setStars] = useState(0);
   const [reviewText, setReviewText] = useState("");
   const [activeInlinePromptKey, setActiveInlinePromptKey] = useState<string | null>(null);
@@ -668,10 +667,8 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
   const [followUpQuestions, setFollowUpQuestions] = useState<SessionQuestion[]>([]);
   const [questionAnswers, setQuestionAnswers] = useState<Record<string, QuestionInputState>>({});
   const [answerPreviews, setAnswerPreviews] = useState<AnswerPreview[]>([]);
-  const [photoInsights, setPhotoInsights] = useState<PhotoInsight[]>([]);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
   const [savingAnswers, setSavingAnswers] = useState(false);
-  const [loadingPhotos, setLoadingPhotos] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [questionRequestedKey, setQuestionRequestedKey] = useState("");
@@ -731,7 +728,6 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
   }).length;
   const tasteProfile = selectedProperty ? buildTasteProfile(reviewText, answerPreviews, selectedProperty) : null;
   const puzzlePieces = [
-    Boolean(travelParty),
     stars > 0,
     reviewWordCount >= 8,
     reviewWordCount >= 20,
@@ -740,7 +736,6 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
     stage === "questions" || remainingGapEntries.length === 0,
     answeredFollowUpCount > 0 || answerPreviews.length > 0
   ].filter(Boolean).length;
-  const helpedCount = travelHelpedCount(answerPreviews.length, photos);
   const stampediaTrips = buildStampediaTrips(customer, selectedStayId);
   const magicFixCopy = MAGIC_FIX_COPY_BY_LANGUAGE[selectedLanguage.code] ?? MAGIC_FIX_COPY_BY_LANGUAGE.en;
   const canContinueToQuestions = normalizeText(reviewText).length > 0 && stars > 0 && !submitting && !magicFixLoading;
@@ -771,6 +766,19 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
         </div>
       </div>
     );
+  }
+
+  function scrollViewportToTop() {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    window.requestAnimationFrame(() => {
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+      });
+    });
   }
 
   function getMagicFixReviewKey(text: string) {
@@ -824,7 +832,6 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
   function resetReviewState(nextStage: Stage = "confirm") {
     setStage(nextStage);
     setInputMode(null);
-    setTravelParty(null);
     setStars(0);
     setReviewText("");
     resetInlinePromptState();
@@ -838,7 +845,6 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
     setFollowUpQuestions([]);
     setQuestionAnswers({});
     setAnswerPreviews([]);
-    setPhotoInsights([]);
     setError("");
     setQuestionRequestedKey("");
     setStampAnimationActive(false);
@@ -1197,7 +1203,9 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
         stayId: selectedStay.stayId,
         reviewText: finalReviewText,
         polishedText: polishedReviewText,
-        answerPreviews: nextAnswerPreviews
+        answerPreviews: nextAnswerPreviews,
+        uploadedPhotoDataUrl: photos[0] ? await fileToDataUrl(photos[0].file) : null,
+        uploadedPhotoAlt: photos[0] ? `Traveler photo from ${selectedProperty.displayName}` : null
       })
     });
 
@@ -1254,6 +1262,7 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
     setMagicFixReviewedKey(getMagicFixReviewKey(nextReviewText));
     setMagicFixOpen(false);
     setMagicFixSuggestion("");
+    scrollViewportToTop();
   }
 
   function keepOriginalReview() {
@@ -1262,10 +1271,12 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
     setMagicFixReviewedKey(getMagicFixReviewKey(reviewText));
     setMagicFixOpen(false);
     setMagicFixSuggestion("");
+    scrollViewportToTop();
   }
 
   function moveToFollowUps() {
     setStage("questions");
+    scrollViewportToTop();
     maybeOpenMagicFixes().catch(() => undefined);
   }
 
@@ -1545,62 +1556,6 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
     speakText(`Smart follow up. ${firstQuestion.prompt}`, () => startVoiceCapture(questionVoiceTarget(firstQuestion.sessionId)));
   }, [followUpQuestions, inputMode, questionVoiceTarget, stage, voiceSupported]);
 
-  useEffect(() => {
-    if (stage !== "done" || !photos.length || photoInsights.length || loadingPhotos) {
-      return;
-    }
-
-    let cancelled = false;
-
-    async function classifyPhotos() {
-      setLoadingPhotos(true);
-
-      try {
-        const images = await Promise.all(
-          photos.slice(0, 3).map(async (photo) => ({
-            id: photo.id,
-            dataUrl: await fileToDataUrl(photo.file)
-          }))
-        );
-
-        const response = await fetch("/api/photos/classify", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ images })
-        });
-
-        const payload = (await response.json()) as {
-          labels?: Array<{ id: string; label: string }>;
-        };
-
-        if (!cancelled && payload.labels?.length) {
-          setPhotoInsights(payload.labels);
-        }
-      } catch {
-        if (!cancelled) {
-          setPhotoInsights(
-            photos.slice(0, 3).map((photo, index) => ({
-              id: photo.id,
-              label: index === 0 ? "Guest room" : index === 1 ? "Property amenity" : "On-site detail"
-            }))
-          );
-        }
-      } finally {
-        if (!cancelled) {
-          setLoadingPhotos(false);
-        }
-      }
-    }
-
-    classifyPhotos().catch(() => undefined);
-
-    return () => {
-      cancelled = true;
-    };
-  }, [stage, photos, photoInsights.length, loadingPhotos]);
-
   if (!selectedStay || !selectedProperty || !propertyVisual || !tasteProfile) {
     return null;
   }
@@ -1625,11 +1580,6 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
               <button className="app-link" onClick={onBackToCustomers} type="button">
                 Switch customer
               </button>
-              <div className="ok-pill" title="Travelers helped">
-                <div className="ok-pip" />
-                <span className="ok-lbl">Helped</span>
-                <span className="ok-val">{helpedCount}</span>
-              </div>
 
               <div className="lang-btn">
                 <button
@@ -1664,17 +1614,6 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
 
         <main className="app-main">
           <section className="content-shell">
-            {stage !== "done" ? (
-              <div className="intro-panel">
-                <p className="pg-eye">Review Invitation</p>
-                <h1 className="pg-h1">{customer.firstName}, share your thoughts here</h1>
-                <p className="pg-sub">
-                  Tell us about a recent stay. ReviewIQ will suggest stale or missing topics while you write, then use
-                  a short next page for up to two follow-ups only if anything important still needs fresh confirmation.
-                </p>
-              </div>
-            ) : null}
-
             <div className="stepbar">
               <div className="steps">
                 <div className={cx("stp", stage === "confirm" && "cur", stage !== "confirm" && "done")}>
@@ -1707,10 +1646,6 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
             <div className={cx("screen", stage === "confirm" && "on")}>
           <p className="pg-eye">Step 1 of 5</p>
           <h1 className="pg-h1">Hi, {customer.firstName}! Choose one of your recent stays to review.</h1>
-          <p className="pg-sub">
-            Pick the stay you want to review first. Every completed review unlocks a new stamp in {customer.firstName}
-            &apos;s Stampedia journal.
-          </p>
 
           <div className="prop-grid">
             {pendingStays.map((stay) => {
@@ -1904,25 +1839,6 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
               <div className="rev-body">
                 <div className="card">
                   <div className="card-hd">
-                    <div className="card-ico">T</div>
-                    <div className="card-title">Who did you travel with?</div>
-                  </div>
-                  <div className="chips">
-                    {PARTY_OPTIONS.map((option) => (
-                      <button
-                        className={cx("chip", travelParty === option.value && "on")}
-                        key={option.value}
-                        onClick={() => setTravelParty(option.value)}
-                        type="button"
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="card">
-                  <div className="card-hd">
                     <div className="card-ico">S</div>
                     <div className="card-title">Overall impression</div>
                   </div>
@@ -2095,17 +2011,6 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
                 </div>
 
                 <div className="smart-q-section">
-                  <div className="smart-q-header">
-                    <span className="smart-q-pill">Adaptive follow-up</span>
-                    <span className="smart-q-subtitle">
-                      {loadingQuestions
-                        ? "Choosing the last 1-2 confirmations to ask"
-                        : followUpQuestions.length
-                          ? "Only asking about details the draft still leaves stale or missing"
-                          : "No extra questions needed before submission."}
-                    </span>
-                  </div>
-
                   {loadingQuestions ? (
                     <div className="smart-q-card">
                       <div className="smart-q-dim">Finding the best follow-up</div>
@@ -2210,6 +2115,7 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
             <div className={cx("screen", stage === "done" && "on")} ref={doneScreenRef}>
           <StampediaJournal
             activeTripId={activeTripId}
+            customerName={customer.firstName}
             newStampStayId={newStampStayId}
             onTripRename={handleTripRename}
             onTripSelect={handleTripSelect}
@@ -2217,26 +2123,6 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
             trips={stampediaTrips}
             turning={journalTurning}
           />
-
-          <div className="helped-bar-wrap">
-            <div className="helped-bar-top">
-              <span className="helped-bar-label">Travelers you have helped</span>
-              <div className="helped-count">
-                <span>{helpedCount}</span> <span>people</span>
-              </div>
-            </div>
-            <div className="helped-track">
-              <div className="helped-fill" style={{ width: `${Math.min(100, helpedCount)}%` }} />
-            </div>
-            <div className="helped-milestones">
-              {[25, 50, 100].map((milestone) => (
-                <div className="helped-milestone" key={milestone}>
-                  <div className={cx("helped-milestone-dot", helpedCount >= milestone && "reached")} />
-                  <span>{milestone}</span>
-                </div>
-              ))}
-            </div>
-          </div>
 
           <div className="taste-card">
             <div className="taste-eye">Traveler Taste Profile</div>
@@ -2275,31 +2161,6 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
                 ))}
               </div>
             </div>
-          </div>
-
-          <div className="photo-ai-section">
-            <div className="photo-ai-lbl">Evidence classification</div>
-            {loadingPhotos ? (
-              <div className="photo-ai-loading">Analyzing uploaded photos...</div>
-            ) : photoInsights.length ? (
-              <div className="photo-ai-grid">
-                {photoInsights.map((insight) => {
-                  const photo = photos.find((item) => item.id === insight.id);
-                  if (!photo) {
-                    return null;
-                  }
-
-                  return (
-                    <div className="photo-ai-item" key={insight.id}>
-                      <img alt={insight.label} className="photo-ai-img" src={photo.previewUrl} />
-                      <div className="photo-ai-tag">{insight.label}</div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="photo-ai-loading">No photo evidence uploaded for this review.</div>
-            )}
           </div>
 
           <div className="my-impact-grid">
@@ -2383,7 +2244,6 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
       {magicFixOpen ? (
         <div className="magicfix-overlay">
           <div className="magicfix-card">
-            <div className="magicfix-kicker">OpenAI enhancement</div>
             <h3 className="magicfix-title">{magicFixCopy.title}</h3>
             <p className="magicfix-body">
               {magicFixLoading

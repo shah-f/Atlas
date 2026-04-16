@@ -10,6 +10,8 @@ export async function POST(request: Request) {
       reviewText?: string;
       polishedText?: string | null;
       answerPreviews?: AnswerPreview[];
+      uploadedPhotoDataUrl?: string | null;
+      uploadedPhotoAlt?: string | null;
     };
 
     if (!body.customerId || !body.stayId || typeof body.reviewText !== "string") {
@@ -21,7 +23,9 @@ export async function POST(request: Request) {
       stayId: body.stayId,
       reviewText: body.reviewText,
       polishedText: typeof body.polishedText === "string" ? body.polishedText : null,
-      answerPreviews: Array.isArray(body.answerPreviews) ? body.answerPreviews : []
+      answerPreviews: Array.isArray(body.answerPreviews) ? body.answerPreviews : [],
+      uploadedPhotoDataUrl: typeof body.uploadedPhotoDataUrl === "string" ? body.uploadedPhotoDataUrl : null,
+      uploadedPhotoAlt: typeof body.uploadedPhotoAlt === "string" ? body.uploadedPhotoAlt : null
     });
 
     return NextResponse.json({ customer });

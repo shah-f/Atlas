@@ -275,6 +275,8 @@ export function markDemoStayReviewed(input: {
   reviewText: string;
   polishedText: string | null;
   answerPreviews: AnswerPreview[];
+  uploadedPhotoDataUrl: string | null;
+  uploadedPhotoAlt: string | null;
 }) {
   const store = readStore();
   const customer = store.customers.find((item) => item.id === input.customerId);
@@ -299,7 +301,9 @@ export function markDemoStayReviewed(input: {
     reviewText: input.reviewText,
     polishedText: input.polishedText,
     answerPreviews: input.answerPreviews,
-    answerPreview: input.answerPreviews[0] ?? null
+    answerPreview: input.answerPreviews[0] ?? null,
+    uploadedPhotoDataUrl: input.uploadedPhotoDataUrl,
+    uploadedPhotoAlt: input.uploadedPhotoAlt
   };
 
   if (existingSubmission) {

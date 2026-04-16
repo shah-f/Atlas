@@ -53,10 +53,6 @@ export function ReviewIqDemoShell({ customers }: ReviewIqDemoShellProps) {
             <div>
               <p className="pg-eye">Demo Profiles</p>
               <h1 className="pg-h1">Choose a seeded Expedia customer</h1>
-              <p className="pg-sub">
-                Each profile has a recent trip with 3 to 4 stays chosen from the dataset because key details are stale,
-                missing, or contradictory. Their Stampedia journal starts blank and persists as you switch between them.
-              </p>
             </div>
             <button className="demo-reset-btn" disabled={resetting} onClick={() => handleResetDemoData().catch(() => undefined)} type="button">
               {resetting ? "Resetting..." : "Reset All Demo Data"}
@@ -76,10 +72,6 @@ export function ReviewIqDemoShell({ customers }: ReviewIqDemoShellProps) {
                   type="button"
                 >
                   <div className="demo-profile-top">
-                    <div className="demo-profile-avatar">
-                      {customer.firstName[0]}
-                      {customer.lastName[0]}
-                    </div>
                     <div>
                       <div className="demo-profile-name">{customer.name}</div>
                       <div className="demo-profile-headline">
