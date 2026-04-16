@@ -3,7 +3,9 @@ node_modules
 .DS_Store
 .env
 .env.local
-data/generated
+data/generated/*
+!data/generated/catalog.json
+!data/generated/rag-index.json
 
 *storybook.log
 storybook-static
