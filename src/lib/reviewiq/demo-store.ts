@@ -255,7 +255,7 @@ async function readLocalStore(): Promise<DemoStore> {
 
 async function writeBlobStore(store: DemoStore) {
   await put(demoDbBlobPath, JSON.stringify(store, null, 2), {
-    access: "private",
+    access: "public",
     addRandomSuffix: false,
     allowOverwrite: true,
     cacheControlMaxAge: 0,
@@ -266,7 +266,7 @@ async function writeBlobStore(store: DemoStore) {
 async function readBlobStore(): Promise<DemoStore> {
   try {
     const blob = await get(demoDbBlobPath, {
-      access: "private",
+      access: "public",
       useCache: false
     });
 
