@@ -49,6 +49,10 @@ type TasteProfile = {
 type PropertyPhoto = {
   url: string;
   alt: string;
+  position?: string;
+  size?: string;
+  revealPosition?: string;
+  revealSize?: string;
 };
 
 type PropertyVisual = {
@@ -92,43 +96,63 @@ const INLINE_PROMPT_LIMIT = 2;
 const PROPERTY_PHOTOS: Record<string, PropertyPhoto> = {
   fa014137b3ea9af6a90c0a86a1d099e46f7e56d6eb33db1ad1ec4bdac68c3caa: {
     url: "/reviewiq-hotels/monterey-california-inn.jpg",
-    alt: "Waterfront inn exterior for Monterey California Inn"
+    alt: "Waterfront inn exterior for Monterey California Inn",
+    position: "50% 48%",
+    size: "112%"
   },
   "3216b1b7885bffdb336265a8de7322ba0cd477cfb3d4f99d19acf488f76a1941": {
     url: "/reviewiq-hotels/bell-gardens-california-motel.jpg",
-    alt: "Roadside motel exterior for Bell Gardens California Motel"
+    alt: "Stylish California hotel room for Bell Gardens California Motel",
+    position: "50% 48%",
+    size: "116%"
   },
   db38b19b897dbece3e34919c662b3fd66d23b615395d11fb69264dd3a9b17723: {
     url: "/reviewiq-hotels/broomfield-colorado-resort.jpg",
-    alt: "Resort exterior with mountain setting for Broomfield Colorado Resort"
+    alt: "Resort exterior with mountain setting for Broomfield Colorado Resort",
+    position: "50% 44%",
+    size: "118%"
   },
   "5f5a0cd8662f0ddf297f2d27358f680daab5d3ac22fd45a4e1c3c3ec2c101a12": {
     url: "/reviewiq-hotels/freudenstadt-baden-wurttemberg-hotel.jpg",
-    alt: "Black Forest style hotel exterior for Freudenstadt Baden-Wurttemberg Hotel"
+    alt: "Stylish Black Forest hotel room for Freudenstadt Baden-Wurttemberg Hotel",
+    position: "57% 50%",
+    size: "132%"
   },
   "9a0043fd4258a1286db1e253ca591662b3aac849da12d0d4f67e08b8f59be65f": {
     url: "/reviewiq-hotels/bochum-hotel-room.jpg",
-    alt: "Hotel room interior for Bochum Hotel"
+    alt: "Hotel room interior for Bochum Hotel",
+    position: "54% 50%",
+    size: "126%"
   },
   "3b984f3ba8df55b2609a1e33fd694cf8407842e1d833c9b4d993b07fc83a2820": {
     url: "/reviewiq-hotels/san-isidro-hotel-room.jpg",
-    alt: "Hotel room interior for San Isidro de El General San Jose Hotel"
+    alt: "Hotel room interior for San Isidro de El General San Jose Hotel",
+    position: "52% 48%",
+    size: "122%"
   },
   f2d8d9557208d58577e9df7ff34e42bf86fb5b10fdfae0c3040d14c374a2a2b9: {
     url: "/reviewiq-hotels/new-smyrna-beach-florida-inn.jpg",
-    alt: "Beachside inn exterior for New Smyrna Beach Florida Inn"
+    alt: "Beachside inn exterior for New Smyrna Beach Florida Inn",
+    position: "50% 52%",
+    size: "116%"
   },
   "7d027ef72c02eaa17af3c993fd5dba50d17b41a6280389a46c13c7e2c32a5b06": {
     url: "/reviewiq-hotels/ocala-florida-inn.jpg",
-    alt: "Florida roadside inn exterior for Ocala Florida Inn"
+    alt: "Florida roadside inn exterior for Ocala Florida Inn",
+    position: "50% 48%",
+    size: "116%"
   },
   "110f01b8ae518a0ee41047bce5c22572988a435e10ead72dc1af793bba8ce0b0": {
     url: "/reviewiq-hotels/pompei-hotel.jpg",
-    alt: "Pompeii area hotel exterior for Pompei Hotel Hotel"
+    alt: "Stylish Pompeii hotel exterior for Pompei Hotel",
+    position: "50% 46%",
+    size: "122%"
   },
   "823fb2499b4e37d99acb65e7198e75965d6496fd1c579f976205c0e6179206df": {
     url: "/reviewiq-hotels/rome-rm-hotel.jpg",
-    alt: "Rome boutique hotel exterior for Rome RM Hotel"
+    alt: "Elegant Rome hotel room for Rome RM Hotel",
+    position: "54% 42%",
+    size: "126%"
   }
 };
 
@@ -167,6 +191,19 @@ function hashString(input: string) {
   return Array.from(input).reduce((sum, character) => sum + character.charCodeAt(0), 0);
 }
 
+function normalizeBackgroundSize(size?: string) {
+  if (!size) {
+    return "cover";
+  }
+
+  const trimmed = size.trim();
+  if (/^\d+(\.\d+)?%$/.test(trimmed)) {
+    return `${trimmed} ${trimmed}`;
+  }
+
+  return trimmed;
+}
+
 function getPropertyVisual(property: PropertySummary): PropertyVisual {
   const themes = [
     {
@@ -200,14 +237,34 @@ function getPropertyVisual(property: PropertySummary): PropertyVisual {
   }
 
   const revealUrl = photo.url.replace(/\.jpg$/i, "-reveal.jpg");
+  const position = photo.position ?? "center";
+  const size = normalizeBackgroundSize(photo.size);
+  const revealPosition = photo.revealPosition ?? position;
+  const revealSize = normalizeBackgroundSize(photo.revealSize ?? photo.size);
 
   return {
-    gradient: `url("${photo.url}") center/cover no-repeat, ${theme.gradient}`,
-    tile: `linear-gradient(180deg, rgba(16, 24, 63, 0.16), rgba(16, 24, 63, 0.04)), url("${photo.url}") center/cover no-repeat, ${theme.tile}`,
-    reveal: `url("${revealUrl}") center/cover no-repeat, ${theme.gradient}`,
+    gradient: `url("${photo.url}") ${position}/${size} no-repeat, ${theme.gradient}`,
+    tile: `linear-gradient(180deg, rgba(16, 24, 63, 0.16), rgba(16, 24, 63, 0.04)), url("${photo.url}") ${position}/${size} no-repeat, ${theme.tile}`,
+    reveal: `url("${revealUrl}") ${revealPosition}/${revealSize} no-repeat, ${theme.gradient}`,
     hasPhoto: true,
     photoAlt: photo.alt
   };
+}
+
+function formatPropertyLocation(property: PropertySummary) {
+  const city = property.city?.trim() ?? "";
+  const province = property.province?.trim() ?? "";
+  const country = property.country?.trim() ?? "";
+
+  const provinceLooksLikeCode = /^[A-Z]{2,3}$/.test(province);
+  const provinceDuplicatesCity = province && city && province.toLowerCase() === city.toLowerCase();
+  const provinceDuplicatesCountry = province && country && province.toLowerCase() === country.toLowerCase();
+
+  const secondary = province && !provinceLooksLikeCode && !provinceDuplicatesCity && !provinceDuplicatesCountry
+    ? province
+    : country;
+
+  return [city, secondary].filter(Boolean).join(", ");
 }
 
 function buildPropertyFacts(property: PropertySummary, locale: string, uiCopy: ReviewIqUiCopy) {
@@ -1846,7 +1903,6 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
             </div>
 
             <div className={cx("screen", stage === "confirm" && "on")}>
-          <p className="pg-eye">{formatUiCopy(uiCopy.stepOf, { current: 1, total: 5 })}</p>
           <h1 className="pg-h1">{formatUiCopy(uiCopy.chooseStayHeading, { name: customer.firstName })}</h1>
 
           <div className="prop-grid">
@@ -1891,7 +1947,7 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
                   />
                   <div className="prop-body">
                     <div className="prop-city stay-card-city">
-                      {[property.city, property.province].filter(Boolean).join(", ")}
+                      {formatPropertyLocation(property)}
                     </div>
                     <div className="prop-name stay-card-name">{property.displayName}</div>
                     <div className="stay-mini-grid">
@@ -1942,7 +1998,6 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
             </div>
 
             <div className={cx("screen", stage === "mode" && "on")}>
-          <p className="pg-eye">{formatUiCopy(uiCopy.stepOf, { current: 2, total: 5 })}</p>
           <h1 className="pg-h1">{formatUiCopy(uiCopy.shareHeading, { name: customer.firstName })}</h1>
 
           <div className="mode-grid">
@@ -2023,7 +2078,7 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
                   <div>
                     <div className="rev-name">{selectedProperty.displayName}</div>
                     <div className="rev-loc">
-                      {[selectedProperty.city, selectedProperty.province, selectedProperty.country].filter(Boolean).join(", ")}
+                      {formatPropertyLocation(selectedProperty)}
                     </div>
                   </div>
                 </div>
@@ -2032,7 +2087,6 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
               <div className="rev-body">
                 <div className="card">
                   <div className="card-hd">
-                    <div className="card-ico">S</div>
                     <div className="card-title">{uiCopy.overallImpression}</div>
                   </div>
                   <div className="star-row">
@@ -2231,7 +2285,7 @@ export function ReviewIqClient({ customer, onBackToCustomers, onCustomerUpdate }
                   <div>
                     <div className="rev-name">{selectedProperty.displayName}</div>
                     <div className="rev-loc">
-                      {[selectedProperty.city, selectedProperty.province, selectedProperty.country].filter(Boolean).join(", ")}
+                      {formatPropertyLocation(selectedProperty)}
                     </div>
                   </div>
                 </div>
